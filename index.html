@@ -91,6 +91,30 @@
   .stag{display:inline-block;font-size:11px;font-weight:700;color:var(--blue);background:#e8edfb;border-radius:8px;padding:2px 6px;margin-left:6px;vertical-align:middle}
   .checkrow{display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px}
   .checkrow input{width:20px;height:20px}
+  body{background:#f1f4f9}
+  .card{box-shadow:0 1px 4px rgba(21,32,43,.06);border-radius:18px}
+  .bigbtn{background:linear-gradient(135deg,#2f6bff,#1d4ed8);box-shadow:0 4px 12px rgba(29,78,216,.25)}
+  .savebtn{background:linear-gradient(135deg,#22a565,#1e7f4f)}
+  header{box-shadow:0 1px 4px rgba(21,32,43,.05)}
+  .clockcard{background:linear-gradient(135deg,#1d4ed8,#4338ca);border-radius:20px;color:#fff;padding:22px 20px;margin-bottom:14px;box-shadow:0 6px 18px rgba(29,78,216,.28)}
+  .clockbig{font-size:46px;font-weight:800;letter-spacing:-1px;line-height:1}
+  .clockdate{font-size:15px;opacity:.85;margin-top:6px;font-weight:600}
+  .nextcard{background:var(--card);border:none;border-radius:18px;padding:18px;box-shadow:0 4px 14px rgba(29,78,216,.12);border-left:5px solid var(--blue);margin-bottom:14px}
+  .nexttime{font-size:34px;font-weight:800;color:var(--blue);line-height:1}
+  .nextlabel{font-size:26px;font-weight:800;margin-top:6px}
+  .nextnotes{font-size:15px;color:var(--mut);margin-top:4px}
+  .schedrow{display:flex;align-items:center;gap:12px;background:var(--card);border:none;border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(21,32,43,.06);width:100%;text-align:left}
+  .schedrow.past{opacity:.45}
+  .schedtime{font-size:22px;font-weight:800;color:var(--blue);flex:none;width:100px}
+  .schedlabel{font-size:22px;font-weight:700;flex:1;min-width:0}
+  .schedgo{background:#e8edfb;color:var(--blue);border:none;border-radius:12px;font-size:15px;font-weight:700;padding:10px 14px;flex:none}
+  .checkrow2{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(21,32,43,.05)}
+  .checkinfo{font-size:14px;color:var(--mut)}
+  .checkname{font-size:15px;font-weight:700;color:var(--ink)}
+  .checklog{background:none;border:none;color:var(--blue);font-weight:700;font-size:14px;padding:6px 8px}
+  .homebtn{flex:none;width:72px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;margin-top:-22px;border-top:none !important;padding-top:0 !important}
+  .homeico{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#2f6bff,#1d4ed8);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(29,78,216,.35);border:3px solid #f1f4f9;line-height:1}
+  .hometxt{font-size:11px;font-weight:700;color:var(--blue)}
 </style>
 </head>
 <body>
@@ -99,6 +123,17 @@
   <button class="aidechip" id="aideChip">Pick aide</button>
 </header>
 <main>
+  <div id="viewHome" hidden>
+    <div class="clockcard">
+      <div class="clockbig" id="homeClock"></div>
+      <div class="clockdate" id="homeDate"></div>
+    </div>
+    <div id="homeNext"></div>
+    <div class="dayhead">Today's schedule</div>
+    <div id="homeSched"></div>
+    <div class="dayhead">Care checks</div>
+    <div id="homeChecks"></div>
+  </div>
   <div id="viewLog">
     <div class="banner" id="remindBanner">Keep this page open so it can remind you when something is due. For the best feel, add it to your home screen.</div>
     <div id="dashboard"></div>
@@ -133,6 +168,7 @@
 <nav>
   <button id="tabLog" class="on">Log</button>
   <button id="tabHistory">History</button>
+  <button id="tabHome" class="homebtn"><span class="homeico">&#8962;</span><span class="hometxt">Home</span></button>
   <button id="tabSchedule">Schedule</button>
   <button id="tabSettings">Settings</button>
 </nav>
@@ -143,7 +179,7 @@
     <div class="sub" id="fSub"></div>
     <div id="fFields"></div>
     <div class="frow"><label>Notes (optional)</label><textarea id="fNotes" placeholder="Anything worth noting"></textarea></div>
-    <div class="frow">
+    <div class="frow" id="fPhotoRow">
       <label id="fPhotoLbl">Photo (required)</label>
       <input type="file" accept="image/*" capture="environment" id="fPhoto" hidden>
       <button class="photobtn" id="fPhotoBtn">Take photo</button>
@@ -221,7 +257,7 @@ d.innerHTML=h;var bs=d.querySelectorAll('button[data-task]');for(var j=0;j<bs.le
 
 function fieldRow(label,name,ph){return '<div class="frow"><label>'+label+'</label><input type="text" inputmode="decimal" id="fld_'+name+'" placeholder="'+(ph||'')+'"></div>';}
 
-function openForm(task){modalTask=task;modalPhoto=null;modalPhoto2=null;document.getElementById('fPhotoLbl').textContent=task==='vitals'?'Photo: O2 & heart rate (required)':'Photo (required)';document.getElementById('fPhoto2Wrap').hidden=(task!=='vitals');
+function openForm(task){modalTask=task;modalPhoto=null;modalPhoto2=null;document.getElementById('fPhotoLbl').textContent=task==='vitals'?'Photo: O2 & heart rate (required)':'Photo (required)';document.getElementById('fPhoto2Wrap').hidden=(task!=='vitals');document.getElementById('fPhotoRow').hidden=(task!=='vitals');
 var f=document.getElementById('fFields');var h='';
 if(task==='vitals'){h+=fieldRow('Pulse (bpm)','pulse');h+=fieldRow('Oxygen (%)','o2');h+=fieldRow('Temperature','temp');}
 if(task==='bp'){h+=fieldRow('Systolic (top number)','sys');h+=fieldRow('Diastolic (bottom number)','dia');}
@@ -252,13 +288,13 @@ function fileToDataURL(file){return new Promise(function(res,rej){var img=new Im
 
 function saveEntry(){if(!modalTask)return;
 if(!S.aide){closeForm();toast('Pick who is logging first');pickAide();return;}
-if(!modalPhoto){toast('A photo is required for every entry');return;}
+if(modalTask==='vitals'&&!modalPhoto){toast('For vitals the O2 and heart rate photo is required');return;}
 if(modalTask==='vitals'&&!modalPhoto2){toast('For vitals add the temperature photo too');return;}
-var e={ts:Date.now(),task:modalTask,aide:S.aide,notes:document.getElementById('fNotes').value.trim(),photo:modalPhoto,photo2:(modalTask==='vitals'?modalPhoto2:null),data:{}};
+var e={ts:Date.now(),task:modalTask,aide:S.aide,notes:document.getElementById('fNotes').value.trim(),photo:(modalTask==='vitals'?modalPhoto:null),photo2:(modalTask==='vitals'?modalPhoto2:null),data:{}};
 if(modalTask==='vitals'){var p=document.getElementById('fld_pulse'),o=document.getElementById('fld_o2'),tp=document.getElementById('fld_temp');if(p&&p.value)e.data.pulse=p.value;if(o&&o.value)e.data.o2=o.value;if(tp&&tp.value)e.data.temp=tp.value;}
 if(modalTask==='bp'){var s=document.getElementById('fld_sys'),d=document.getElementById('fld_dia');if(s&&s.value)e.data.sys=s.value;if(d&&d.value)e.data.dia=d.value;}
 if(modalTask==='meds'){var cbs=document.querySelectorAll('.medcb:checked');var g=[];for(var i=0;i<cbs.length;i++)g.push(cbs[i].value);e.data.meds=g;}
-idbPut(e).then(function(){announced[modalTask]=false;closeForm();return loadEntries();}).then(function(){renderDash();toast('Saved');}).catch(function(){toast('Could not save, try again');});}
+idbPut(e).then(function(){announced[modalTask]=false;closeForm();return loadEntries();}).then(function(){renderDash();renderHome();toast('Saved');}).catch(function(){toast('Could not save, try again');});}
 
 function detailLine(e){var d=e.data||{};var bits=[];if(d.sys||d.dia)bits.push('BP '+(d.sys||'?')+'/'+(d.dia||'?'));if(d.pulse)bits.push('pulse '+d.pulse);if(d.o2)bits.push('O2 '+d.o2+'%');if(d.temp)bits.push('temp '+d.temp);if(d.meds&&d.meds.length)bits.push('gave: '+d.meds.join(', '));return bits.join(' · ');}
 
@@ -279,14 +315,14 @@ if(fAide!=='all'&&e.aide!==fAide)continue;
 var day=fmtDay(e.ts);
 if(day!==lastDay){h+='<div class="dayhead">'+day+'</div>';lastDay=day;}
 var det=detailLine(e);
-var p1='<img class="thumb" src="'+e.photo+'" data-ts="'+e.ts+'" alt="">';var p2='';if(e.photo2)p2='<img class="thumb" src="'+e.photo2+'" alt="">';h+=p1+p2
+var p1='';if(e.photo)p1='<img class="thumb" src="'+e.photo+'" data-ts="'+e.ts+'" alt="">';var p2='';if(e.photo2)p2='<img class="thumb" src="'+e.photo2+'" alt="">';h+=p1+p2
 +'<div class="ebody"><div class="etime">'+fmtTime(e.ts)+' · <span class="etask">'+taskLabel(e.task)+'</span> · '+e.aide+'</div>'
 +(det?'<div class="edetail">'+det+'</div>':'')
 +(e.notes?'<div class="enotes">'+esc(e.notes)+'</div>':'')
 +'</div><button class="del" data-ts="'+e.ts+'">✕</button></div>';}
 list.innerHTML=h;
 var thumbs=list.querySelectorAll('img.thumb');for(var j=0;j<thumbs.length;j++){(function(th){th.addEventListener('click',function(){showViewer(th.src);});})(thumbs[j]);}
-var dels=list.querySelectorAll('button.del');for(var k=0;k<dels.length;k++){(function(dl){dl.addEventListener('click',function(){var ts=Number(dl.getAttribute('data-ts'));if(confirm('Delete this entry?')){idbDel(ts).then(loadEntries).then(function(){renderDash();renderHistory();toast('Deleted');});}});})(dels[k]);}}
+var dels=list.querySelectorAll('button.del');for(var k=0;k<dels.length;k++){(function(dl){dl.addEventListener('click',function(){var ts=Number(dl.getAttribute('data-ts'));if(confirm('Delete this entry?')){idbDel(ts).then(loadEntries).then(function(){renderDash();renderHome();renderHistory();toast('Deleted');});}});})(dels[k]);}}
 
 function todaySummary(){var now=new Date();var start=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();var es=entries.filter(function(e){return e.ts>=start;}).sort(function(a,b){return a.ts-b.ts;});if(!es.length)return null;
 var out='Rabbi care log — '+now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})+'\n';
@@ -297,22 +333,50 @@ function doCopy(){var s=todaySummary();if(!s){toast('Nothing logged today yet');
 function copyText(s){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(s).then(function(){toast('Summary copied');},function(){fallbackCopy(s);});}else fallbackCopy(s);}
 function fallbackCopy(s){var ta=document.createElement('textarea');ta.value=s;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('Summary copied');}catch(e){toast('Copy failed');}document.body.removeChild(ta);}
 
-function pickAide(){var names=(S.aides&&S.aides.length?S.aides:['Victor','Roel','Enzo']);var opts='';for(var i=0;i<names.length;i++)opts+='\n'+(i+1)+'. '+names[i];var pick=prompt('Who is logging?'+opts);if(pick===null)return;var n=parseInt(pick,10);if(n>=1&&n<=names.length){S.aide=names[n-1];}else if(pick.trim()){S.aide=pick.trim();}else return;saveS();renderChip();renderDash();}
+function pickAide(){var names=(S.aides&&S.aides.length?S.aides:['Victor','Roel','Enzo']);var opts='';for(var i=0;i<names.length;i++)opts+='\n'+(i+1)+'. '+names[i];var pick=prompt('Who is logging?'+opts);if(pick===null)return;var n=parseInt(pick,10);if(n>=1&&n<=names.length){S.aide=names[n-1];}else if(pick.trim()){S.aide=pick.trim();}else return;saveS();renderChip();renderDash();renderHome();}
 function renderChip(){document.getElementById('aideChip').textContent=S.aide||'Pick aide';}
 
 function saveSettings(){var a=document.getElementById('setAides').value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
 var m=document.getElementById('setMeds').value.split('\n').map(function(x){return x.trim();}).filter(Boolean).map(parseMedLine);
 var iv={vitals:parseInt(document.getElementById('setIvVitals').value,10)||S.intervals.vitals,bp:parseInt(document.getElementById('setIvBp').value,10)||S.intervals.bp,meds:parseInt(document.getElementById('setIvMeds').value,10)||S.intervals.meds};
 S.aides=a.length?a:S.aides;S.meds=m;S.intervals=iv;if(S.aide&&a.length&&a.indexOf(S.aide)<0)S.aide='';
-saveS();renderChip();renderDash();fillSettings();toast('Settings saved');}
+saveS();renderChip();renderDash();renderHome();fillSettings();toast('Settings saved');}
 function fillSettings(){document.getElementById('setAides').value=(S.aides||[]).join('\n');document.getElementById('setMeds').value=(S.meds||[]).map(function(x){return medName(x)+(medTime(x)?' @ '+medTime(x):'');}).join('\n');document.getElementById('setIvVitals').value=S.intervals.vitals;document.getElementById('setIvBp').value=S.intervals.bp;document.getElementById('setIvMeds').value=S.intervals.meds;}
 
 function exportData(){var blob=new Blob([JSON.stringify({settings:S,entries:entries},null,1)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rabbi-care-log-backup.json';document.body.appendChild(a);a.click();document.body.removeChild(a);toast('Backup downloaded');}
-function wipeData(){if(confirm('Delete every entry on this phone? This cannot be undone.')&&confirm('Really delete everything?')){var t=db.transaction('entries','readwrite');t.objectStore('entries').clear();t.oncomplete=function(){entries=[];renderDash();renderHistory();toast('All entries deleted');};}}
+function wipeData(){if(confirm('Delete every entry on this phone? This cannot be undone.')&&confirm('Really delete everything?')){var t=db.transaction('entries','readwrite');t.objectStore('entries').clear();t.oncomplete=function(){entries=[];renderDash();renderHome();renderHistory();toast('All entries deleted');};}}
 
 function enableReminders(){if(!('Notification'in window)){toast('This phone does not support reminders');return;}Notification.requestPermission().then(function(p){toast(p==='granted'?'Reminders on':'Reminders stayed off');});}
 function checkDue(){for(var i=0;i<TASKS.length;i++){var t=TASKS[i];var iv=(S.intervals[t.id]||60)*60000;var l=lastEntry(t.id);var over=l&&(Date.now()-l.ts)>=iv;if(over&&!announced[t.id]){announced[t.id]=true;if(navigator.vibrate)navigator.vibrate([300,150,300]);if('Notification'in window&&Notification.permission==='granted'){try{new Notification(t.label+' is due');}catch(e){}}}else if(l&&!over){announced[t.id]=false;}}}
 
+function tickClock(){var n=new Date();var el=document.getElementById('homeClock');if(el)el.textContent=fmt12(('0'+n.getHours()).slice(-2)+':'+('0'+n.getMinutes()).slice(-2));var d=document.getElementById('homeDate');if(d)d.textContent=n.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});}
+function taskForItem(label){var s=(label||'').toLowerCase();if(s.indexOf('med')>=0)return'meds';if(s.indexOf('vital')>=0||s.indexOf('oxygen')>=0||s.indexOf('o2')>=0||s.indexOf('temp')>=0)return'vitals';if(s.indexOf('blood')>=0||s.indexOf(' bp')>=0)return'bp';return null;}
+function minsOf(t){var p=(t||'').split(':');if(p.length<2)return null;return parseInt(p[0],10)*60+parseInt(p[1],10);}
+function nowMins(){var n=new Date();return n.getHours()*60+n.getMinutes();}
+function renderHome(){
+tickClock();
+var nextEl=document.getElementById('homeNext');var listEl=document.getElementById('homeSched');var chkEl=document.getElementById('homeChecks');
+var today=dstr(new Date());var nm=nowMins();
+var its=itemsOn(today).slice().sort(function(a,c){return (a.t||'99:99')<(c.t||'99:99')?-1:1;});
+var nxt=null;for(var i=0;i<its.length;i++){var mm=minsOf(its[i].t);if(mm!==null&&mm>=nm){nxt=its[i];break;}}
+var h='';
+if(nxt){var tk=taskForItem(nxt.label);
+h+='<div class="nextcard"><div class="nexttime">'+fmt12(nxt.t)+'</div><div class="nextlabel">'+esc(nxt.label)+'</div>'+(nxt.notes?'<div class="nextnotes">'+esc(nxt.notes)+'</div>':'')+(tk?'<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-task="'+tk+'">Log it now</button>':'')+'</div>';}
+else h+='<div class="empty">Nothing else on the schedule today</div>';
+nextEl.innerHTML=h;
+var nb=nextEl.querySelectorAll('button[data-task]');for(var j=0;j<nb.length;j++){(function(btn){btn.addEventListener('click',function(){openForm(btn.getAttribute('data-task'));});})(nb[j]);}
+var g='';
+if(!its.length)g+='<div class="empty">No schedule yet. Add wake up, prayers and meds times in the Schedule tab.</div>';
+for(var k=0;k<its.length;k++){var it=its[k];var mm2=minsOf(it.t);var past=(mm2!==null&&mm2<nm);var tk2=taskForItem(it.label);
+g+='<button class="schedrow'+(past?' past':'')+'" data-task="'+(tk2||'')+'"><span class="schedtime">'+(it.t?fmt12(it.t):'')+'</span><span class="schedlabel">'+esc(it.label)+'</span>'+(tk2?'<span class="schedgo">Log</span>':'')+'</button>';}
+listEl.innerHTML=g;
+var rows=listEl.querySelectorAll('button.schedrow');for(var q=0;q<rows.length;q++){(function(r2){r2.addEventListener('click',function(){var tk3=r2.getAttribute('data-task');if(tk3)openForm(tk3);else toast('Just a schedule item, nothing to log');});})(rows[q]);}
+var c='';
+for(var w=0;w<TASKS.length;w++){var t=TASKS[w];var st=taskState(t.id);
+c+='<div class="checkrow2"><div><div class="checkname">'+t.label+'</div><div class="checkinfo">'+(st.last?('last '+fmtTime(st.last.ts)+' by '+(st.last.aide||'?')):'not logged yet')+'</div></div><button class="checklog" data-task="'+t.id+'">Log</button></div>';}
+chkEl.innerHTML=c;
+var cbs=chkEl.querySelectorAll('button[data-task]');for(var z=0;z<cbs.length;z++){(function(btn2){btn2.addEventListener('click',function(){openForm(btn2.getAttribute('data-task'));});})(cbs[z]);}
+}
 function renderSchedule(){
 var wrap=document.getElementById('calWrap');
 if(!schedMonth){var n=new Date();schedMonth=new Date(n.getFullYear(),n.getMonth(),1);}
@@ -364,14 +428,15 @@ var d=daily?'':document.getElementById('sDate').value;
 if(!daily&&!d){toast('Pick a date');return;}
 S.sched.push({id:Date.now(),label:label,t:t,rep:daily?'daily':'date',d:d,notes:document.getElementById('sNotes').value.trim()});
 saveS();document.getElementById('sModal').hidden=true;renderSchedule();toast('Added to schedule');}
-function showTab(name){['Log','History','Schedule','Settings'].forEach(function(n){document.getElementById('tab'+n).classList.toggle('on',n===name);document.getElementById('view'+n).hidden=(n!==name);});
-if(name==='History')renderHistory();if(name==='Schedule')renderSchedule();if(name==='Settings')fillSettings();}
+function showTab(name){['Home','Log','History','Schedule','Settings'].forEach(function(n){document.getElementById('tab'+n).classList.toggle('on',n===name);document.getElementById('view'+n).hidden=(n!==name);});
+if(name==='Home')renderHome();if(name==='History')renderHistory();if(name==='Schedule')renderSchedule();if(name==='Settings')fillSettings();}
 
 document.getElementById('aideChip').addEventListener('click',pickAide);
 document.getElementById('tabLog').addEventListener('click',function(){showTab('Log');});
 document.getElementById('tabHistory').addEventListener('click',function(){showTab('History');});
 document.getElementById('tabSettings').addEventListener('click',function(){showTab('Settings');});
 document.getElementById('tabSchedule').addEventListener('click',function(){showTab('Schedule');});
+document.getElementById('tabHome').addEventListener('click',function(){showTab('Home');});
 document.getElementById('addSched').addEventListener('click',openSchedForm);
 document.getElementById('sCancel').addEventListener('click',function(){document.getElementById('sModal').hidden=true;});
 document.getElementById('sDaily').addEventListener('change',updateSchedDateVis);
@@ -389,7 +454,7 @@ document.getElementById('exportData').addEventListener('click',exportData);
 document.getElementById('wipeData').addEventListener('click',wipeData);
 document.getElementById('enableReminders').addEventListener('click',enableReminders);
 
-openDB().then(loadEntries).then(function(){renderChip();renderDash();setInterval(function(){renderDash();checkDue();},30000);checkDue();}).catch(function(){document.getElementById('dashboard').innerHTML='<div class="empty">Could not open storage on this browser.</div>';});
+openDB().then(loadEntries).then(function(){renderChip();showTab('Home');setInterval(function(){renderDash();renderHome();checkDue();},30000);setInterval(tickClock,15000);checkDue();}).catch(function(){document.getElementById('dashboard').innerHTML='<div class="empty">Could not open storage on this browser.</div>';});
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
