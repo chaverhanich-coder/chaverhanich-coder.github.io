@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Rabbi's Care Log</title>
+<meta name="theme-color" content="#f4f6f8">
+<link rel="manifest" href="manifest.json">
 <style>
   :root{--ink:#15202b;--mut:#5b6b7b;--line:#e3e8ee;--bg:#f4f6f8;--card:#fff;--red:#c0392b;--amber:#b7791f;--green:#1e7f4f;--blue:#1d4ed8}
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -267,5 +269,6 @@ document.getElementById('enableReminders').addEventListener('click',enableRemind
 
 openDB().then(loadEntries).then(function(){renderChip();renderDash();setInterval(function(){renderDash();checkDue();},30000);checkDue();}).catch(function(){document.getElementById('dashboard').innerHTML='<div class="empty">Could not open storage on this browser.</div>';});
 </script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
 </html>
