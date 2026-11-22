@@ -134,7 +134,6 @@
       <button class="photobtn" id="logPhotoBtn">Take photo</button>
       <img class="photoPrev" id="logPhotoPrev" hidden alt="">
     </div>
-    <div class="frow"><label>Notes (optional)</label><textarea id="logNotes" placeholder="Anything worth noting"></textarea></div>
     <div class="btnrow">
       <button class="cancelbtn" id="logCancel">Cancel</button>
       <button class="savebtn" id="logSave">Save</button>
@@ -244,20 +243,14 @@ function saveDone(ref){idbPut({ts:Date.now(),kind:'done',ref:ref}).then(loadLogs
 
 function openLog(kind,ref){logTask=kind;logRef=ref;logPhoto=null;
 document.getElementById('logTitle').textContent=kind==='vitals'?'Log vitals':'Log blood pressure';
-var f=document.getElementById('logFields');var h='';
-if(kind==='vitals'){h+=fieldRow('Pulse (bpm), optional','pulse');h+=fieldRow('Oxygen (%), optional','o2');h+=fieldRow('Temperature, optional','temp');}
-else{h+=fieldRow('Systolic (top number), optional','sys');h+=fieldRow('Diastolic (bottom number), optional','dia');}
-f.innerHTML=h;
+document.getElementById('logFields').innerHTML='';
 var p=document.getElementById('logPhotoPrev');p.hidden=true;p.removeAttribute('src');
 document.getElementById('logPhoto').value='';document.getElementById('logPhotoBtn').textContent='Take photo';
-document.getElementById('logNotes').value='';
 document.getElementById('logModal').hidden=false;}
 function closeLog(){document.getElementById('logModal').hidden=true;logTask=null;logRef=null;logPhoto=null;}
 function saveLog(){if(!logTask)return;
 if(!logPhoto){toast('The photo is required');return;}
-var e={ts:Date.now(),kind:logTask,ref:logRef,photo:logPhoto,notes:document.getElementById('logNotes').value.trim(),data:{}};
-if(logTask==='vitals'){var p=document.getElementById('fld_pulse'),o=document.getElementById('fld_o2'),tp=document.getElementById('fld_temp');if(p&&p.value)e.data.pulse=p.value;if(o&&o.value)e.data.o2=o.value;if(tp&&tp.value)e.data.temp=tp.value;}
-else{var s2=document.getElementById('fld_sys'),d2=document.getElementById('fld_dia');if(s2&&s2.value)e.data.sys=s2.value;if(d2&&d2.value)e.data.dia=d2.value;}
+var e={ts:Date.now(),kind:logTask,ref:logRef,photo:logPhoto};
 idbPut(e).then(loadLogs).then(function(){closeLog();renderHome();toast('Logged');}).catch(function(){toast('Could not save, try again');});}
 
 function renderSchedule(){
