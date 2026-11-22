@@ -57,7 +57,6 @@
   .schedlabel{font-size:22px;font-weight:700;flex:1;min-width:0}
   .subline{display:block;font-size:14px;color:var(--mut);font-weight:500;margin-top:2px}
   .schedgo{background:#e8edfb;color:var(--blue);border:none;border-radius:12px;font-size:15px;font-weight:700;padding:10px 14px;flex:none}
-  .donemark{color:var(--green);font-weight:800}
   .checkrow2{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(21,32,43,.05)}
   .checkrow2.past{opacity:.45}
   .checkname{font-size:15px;font-weight:700;color:var(--ink)}
@@ -302,7 +301,7 @@ function openRoutineForm(){document.getElementById('rKind').value='meds';documen
 function updateRoutineVis(){var k=document.getElementById('rKind').value;document.getElementById('rMedsWrap').hidden=(k!=='meds');document.getElementById('rNameWrap').hidden=(k==='vitals'||k==='bp');document.getElementById('rIvWrap').hidden=(k==='other');document.getElementById('rUntilWrap').hidden=(k==='other');}
 function saveRoutineItem(){var k=document.getElementById('rKind').value;var t=document.getElementById('rTime').value;
 if(!t){toast('Pick a time');return;}
-var label=k==='vitals'?KINDS.vitals:(k==='bp'?KINDS.bp:document.getElementById('rName').value.trim());
+var label=k==='vitals'?KINDS.vitals:(k==='bp'?KINDS.bp:(document.getElementById('rName').value.trim()||(k==='meds'?'Meds':'')));
 if(!label){toast('Write a name');return;}
 var meds=[];
 if(k==='meds'){meds=document.getElementById('rMeds').value.split('\n').map(function(x){return x.trim();}).filter(Boolean);}
@@ -342,6 +341,6 @@ document.getElementById('wipeData').addEventListener('click',wipeData);
 
 openDB().then(loadLogs).then(function(){showTab('Home');setInterval(function(){renderHome();},30000);setInterval(tickClock,15000);}).catch(function(){document.getElementById('homeList').innerHTML='<div class="empty">Could not open storage on this browser.</div>';});
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});if(navigator.serviceWorker.controller){var refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',function(){if(refreshing)return;refreshing=true;window.location.reload();});}});}</script>
 </body>
 </html>
