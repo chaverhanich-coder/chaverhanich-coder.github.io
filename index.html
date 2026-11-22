@@ -133,6 +133,8 @@
     <div id="homeSched"></div>
     <div class="dayhead">Care checks</div>
     <div id="homeChecks"></div>
+    <div class="dayhead">Recent log</div>
+    <div id="homeRecent"></div>
   </div>
   <div id="viewLog">
     <div class="banner" id="remindBanner">Keep this page open so it can remind you when something is due. For the best feel, add it to your home screen.</div>
@@ -376,6 +378,13 @@ for(var w=0;w<TASKS.length;w++){var t=TASKS[w];var st=taskState(t.id);
 c+='<div class="checkrow2"><div><div class="checkname">'+t.label+'</div><div class="checkinfo">'+(st.last?('last '+fmtTime(st.last.ts)+' by '+(st.last.aide||'?')):'not logged yet')+'</div></div><button class="checklog" data-task="'+t.id+'">Log</button></div>';}
 chkEl.innerHTML=c;
 var cbs=chkEl.querySelectorAll('button[data-task]');for(var z=0;z<cbs.length;z++){(function(btn2){btn2.addEventListener('click',function(){openForm(btn2.getAttribute('data-task'));});})(cbs[z]);}
+var rrEl=document.getElementById('homeRecent');
+var rh='';
+if(!entries.length)rh+='<div class="empty">Nothing logged yet.</div>';
+var lim=Math.min(8,entries.length);
+for(var y2=0;y2<lim;y2++){var e2=entries[y2];var det2=detailLine(e2);
+rh+='<div class="checkrow2"><div><div class="checkname">'+fmtDay(e2.ts)+' '+fmtTime(e2.ts)+' &middot; '+taskLabel(e2.task)+'</div><div class="checkinfo">'+(e2.aide||'?')+(det2?' &middot; '+esc(det2):'')+(e2.notes?' &middot; '+esc(e2.notes):'')+'</div></div></div>';}
+rrEl.innerHTML=rh;
 }
 function renderSchedule(){
 var wrap=document.getElementById('calWrap');
