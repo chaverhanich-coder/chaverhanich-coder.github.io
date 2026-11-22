@@ -165,7 +165,7 @@ if(leftm<=2)return{cls:'st-amber',main:'Due now',sub:'',over:false,last:l};
 return{cls:'st-green',main:leftm+'m left',sub:'',over:false,last:l};}
 
 function renderDash(){var d=document.getElementById('dashboard');var h='';for(var i=0;i<TASKS.length;i++){var t=TASKS[i];var st=taskState(t.id);var l=st.last;var lastTxt=l?('Last: '+ago(l.ts)+' by '+(l.aide||'?')):'No entry yet';
-h+='<div class="card taskcard'+(st.over?' overdue':'')+'"'
+h+='<div class="card taskcard'+(st.over?' overdue':'')+'">'
 +'<div class="taskrow"><div><div class="taskname">'+t.label+'</div><div class="every">every '+(S.intervals[t.id]||60)+' min</div></div>'
 +'<div class="status '+st.cls+'">'+st.main+'</div></div>'
 +'<div class="last">'+lastTxt+'</div>'
@@ -183,7 +183,7 @@ if(task==='meds'){var meds=S.meds||[];if(!meds.length){h+='<div class="frow" sty
 else{h+='<div class="frow"><label>Medications given</label><div class="medcheck">';for(var i=0;i<meds.length;i++){var mn=medName(meds[i]);var mt=medTime(meds[i]);h+='<label><input type="checkbox" class="medcb" value="'+mn.replace(/"/g,'&quot;')+'">'+esc(mn)+(mt?' <span class="medtime">'+esc(mt)+'</span>':'')+'</label>';}h+='</div></div>';}}
 f.innerHTML=h;
 document.getElementById('fTitle').textContent='Log '+taskLabel(task);
-document.getElementById('fSub').textContent='By '+(S.aide||'no aide picked')+' · '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+document.getElementById('fSub').textContent='By '+(S.aide||'no aide picked')+' \u00b7 '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
 var p=document.getElementById('fPhotoPrev');p.hidden=true;p.removeAttribute('src');
 document.getElementById('fPhoto').value='';
 document.getElementById('fPhotoBtn').textContent='Take photo';
@@ -214,7 +214,7 @@ if(modalTask==='bp'){var s=document.getElementById('fld_sys'),d=document.getElem
 if(modalTask==='meds'){var cbs=document.querySelectorAll('.medcb:checked');var g=[];for(var i=0;i<cbs.length;i++)g.push(cbs[i].value);e.data.meds=g;}
 idbPut(e).then(function(){announced[modalTask]=false;closeForm();return loadEntries();}).then(function(){renderDash();toast('Saved');}).catch(function(){toast('Could not save, try again');});}
 
-function detailLine(e){var d=e.data||{};var bits=[];if(d.sys||d.dia)bits.push('BP '+(d.sys||'?')+'/'+(d.dia||'?'));if(d.pulse)bits.push('pulse '+d.pulse);if(d.o2)bits.push('O2 '+d.o2+'%');if(d.temp)bits.push('temp '+d.temp);if(d.meds&&d.meds.length)bits.push('gave: '+d.meds.join(', '));return bits.join(' · ');}
+function detailLine(e){var d=e.data||{};var bits=[];if(d.sys||d.dia)bits.push('BP '+(d.sys||'?')+'/'+(d.dia||'?'));if(d.pulse)bits.push('pulse '+d.pulse);if(d.o2)bits.push('O2 '+d.o2+'%');if(d.temp)bits.push('temp '+d.temp);if(d.meds&&d.meds.length)bits.push('gave: '+d.meds.join(', '));return bits.join(' \u00b7 ');}
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function bindChips(el,cb){var cs=el.querySelectorAll('.chip');for(var i=0;i<cs.length;i++){(function(c){c.addEventListener('click',function(){cb(c.getAttribute('data-v'));});})(cs[i]);}}
@@ -234,17 +234,17 @@ var day=fmtDay(e.ts);
 if(day!==lastDay){h+='<div class="dayhead">'+day+'</div>';lastDay=day;}
 var det=detailLine(e);
 h+='<div class="card entry"><img class="thumb" src="'+e.photo+'" data-ts="'+e.ts+'" alt="">'+(e.photo2?'<img class="thumb" src="'+e.photo2+'" alt="">':'')
-+'<div class="ebody"><div class="etime">'+fmtTime(e.ts)+' · <span class="etask">'+taskLabel(e.task)+'</span> · '+e.aide+'</div>'
++'<div class="ebody"><div class="etime">'+fmtTime(e.ts)+' \u00b7 <span class="etask">'+taskLabel(e.task)+'</span> \u00b7 '+e.aide+'</div>'
 +(det?'<div class="edetail">'+det+'</div>':'')
 +(e.notes?'<div class="enotes">'+esc(e.notes)+'</div>':'')
-+'</div><button class="del" data-ts="'+e.ts+'">✕</button></div>';}
++'</div><button class="del" data-ts="'+e.ts+'">\u2715</button></div>';}
 list.innerHTML=h;
 var thumbs=list.querySelectorAll('img.thumb');for(var j=0;j<thumbs.length;j++){(function(th){th.addEventListener('click',function(){showViewer(th.src);});})(thumbs[j]);}
 var dels=list.querySelectorAll('button.del');for(var k=0;k<dels.length;k++){(function(dl){dl.addEventListener('click',function(){var ts=Number(dl.getAttribute('data-ts'));if(confirm('Delete this entry?')){idbDel(ts).then(loadEntries).then(function(){renderDash();renderHistory();toast('Deleted');});}});})(dels[k]);}}
 
 function todaySummary(){var now=new Date();var start=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();var es=entries.filter(function(e){return e.ts>=start;}).sort(function(a,b){return a.ts-b.ts;});if(!es.length)return null;
-var out='Rabbi care log — '+now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})+'\n';
-for(var i=0;i<es.length;i++){var e=es[i];out+=fmtTime(e.ts)+' '+taskLabel(e.task)+' ('+e.aide+')';var det=detailLine(e);if(det)out+=' — '+det;if(e.notes)out+=' — '+e.notes;out+='\n';}
+var out='Rabbi care log \u2014 '+now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})+'\n';
+for(var i=0;i<es.length;i++){var e=es[i];out+=fmtTime(e.ts)+' '+taskLabel(e.task)+' ('+e.aide+')';var det=detailLine(e);if(det)out+=' \u2014 '+det;if(e.notes)out+=' \u2014 '+e.notes;out+='\n';}
 return out;}
 function doShare(){var s=todaySummary();if(!s){toast('Nothing logged today yet');return;}if(navigator.share){navigator.share({text:s}).catch(function(){});}else{copyText(s);}}
 function doCopy(){var s=todaySummary();if(!s){toast('Nothing logged today yet');return;}copyText(s);}
