@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rabbi's Day</title>
+<meta name="theme-color" content="#1d4ed8">
+<link rel="manifest" href="manifest.json">
+<style>
+  :root{--ink:#15202b;--mut:#5b6b7b;--line:#e3e8ee;--bg:#f1f4f9;--card:#fff;--red:#c0392b;--amber:#b7791f;--green:#1e7f4f;--blue:#1d4ed8}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  [hidden]{display:none !important}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:17px;line-height:1.35;padding-bottom:76px}
+  header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:12px 16px;box-shadow:0 1px 4px rgba(21,32,43,.05)}
+  header h1{font-size:19px;margin:0;font-weight:700}
+  main{padding:12px 12px 0;max-width:640px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(21,32,43,.06)}
+  .dayhead{font-weight:700;font-size:15px;color:var(--mut);margin:18px 4px 6px;text-transform:uppercase;letter-spacing:.4px}
+  .bigbtn{display:block;width:100%;border:none;border-radius:12px;background:linear-gradient(135deg,#2f6bff,#1d4ed8);color:#fff;font-size:18px;font-weight:700;padding:14px;margin:12px 0;box-shadow:0 4px 12px rgba(29,78,216,.25)}
+  .bigbtn:active{opacity:.85}
+  .empty{color:var(--mut);text-align:center;padding:24px 10px;font-size:16px}
+  nav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);display:flex;z-index:6;padding-bottom:env(safe-area-inset-bottom)}
+  nav button{flex:1;border:none;background:none;font-size:15px;font-weight:600;color:var(--mut);padding:14px 0}
+  nav button.on{color:var(--blue);border-top:3px solid var(--blue);padding-top:11px}
+  .homebtn{flex:none;width:72px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;margin-top:-22px;border-top:none !important;padding-top:0 !important}
+  .homeico{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#2f6bff,#1d4ed8);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 16px rgba(29,78,216,.35);border:3px solid #f1f4f9;line-height:1}
+  .hometxt{font-size:11px;font-weight:700;color:var(--blue)}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
+  .sheet{background:var(--card);width:100%;max-width:640px;border-radius:18px 18px 0 0;padding:18px 16px 26px;max-height:92vh;overflow-y:auto}
+  .sheet h2{margin:0 0 12px;font-size:22px}
+  .frow{margin-bottom:12px}
+  .frow label{display:block;font-weight:600;font-size:15px;margin-bottom:5px}
+  .frow input[type=number],.frow input[type=text],.frow input[type=time],.frow input[type=date],.frow textarea,.frow select{width:100%;font-size:17px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .frow textarea{min-height:64px;resize:vertical}
+  .photobtn{display:block;width:100%;border:2px dashed var(--mut);border-radius:12px;background:#f8fafc;color:var(--mut);font-size:16px;font-weight:600;padding:18px;text-align:center}
+  .photoPrev{width:100%;border-radius:12px;margin-top:8px;display:block}
+  .btnrow{display:flex;gap:10px;margin-top:14px}
+  .btnrow button{flex:1;border:none;border-radius:12px;font-size:17px;font-weight:700;padding:14px}
+  .savebtn{background:linear-gradient(135deg,#22a565,#1e7f4f);color:#fff}
+  .cancelbtn{background:#e9edf2;color:var(--ink)}
+  .linkbtn{background:none;border:none;color:var(--blue);font-size:16px;font-weight:600;padding:10px 0;text-align:left;width:100%}
+  .danger{color:var(--red)}
+  .clockcard{background:linear-gradient(135deg,#1d4ed8,#4338ca);border-radius:20px;color:#fff;padding:22px 20px;margin-bottom:14px;box-shadow:0 6px 18px rgba(29,78,216,.28)}
+  .clockbig{font-size:46px;font-weight:800;letter-spacing:-1px;line-height:1}
+  .clockdate{font-size:15px;opacity:.85;margin-top:6px;font-weight:600}
+  .nextcard{background:var(--card);border:none;border-radius:18px;padding:18px;box-shadow:0 4px 14px rgba(29,78,216,.12);border-left:5px solid var(--blue);margin-bottom:14px}
+  .nexttime{font-size:34px;font-weight:800;color:var(--blue);line-height:1}
+  .nextlabel{font-size:26px;font-weight:800;margin-top:6px}
+  .nextnotes{font-size:15px;color:var(--mut);margin-top:4px}
+  .schedrow{display:flex;align-items:center;gap:12px;background:var(--card);border:none;border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(21,32,43,.06);width:100%;text-align:left}
+  .schedrow.past{opacity:.45}
+  .schedrow.done{opacity:.55}
+  .schedtime{font-size:22px;font-weight:800;color:var(--blue);flex:none;width:100px}
+  .schedlabel{font-size:22px;font-weight:700;flex:1;min-width:0}
+  .subline{display:block;font-size:14px;color:var(--mut);font-weight:500;margin-top:2px}
+  .schedgo{background:#e8edfb;color:var(--blue);border:none;border-radius:12px;font-size:15px;font-weight:700;padding:10px 14px;flex:none}
+  .donemark{color:var(--green);font-weight:800}
+  .checkrow2{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(21,32,43,.05)}
+  .checkrow2.past{opacity:.45}
+  .checkname{font-size:15px;font-weight:700;color:var(--ink)}
+  .checkinfo{font-size:14px;color:var(--mut)}
+  .checklog{background:none;border:none;color:var(--blue);font-weight:700;font-size:14px;padding:6px 8px}
+  .sitem{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .sitem:last-child{border-bottom:none}
+  .stime{font-weight:700;font-size:16px;flex:none;width:84px}
+  .sbody{flex:1;min-width:0}
+  .slabel{font-weight:600;font-size:16px}
+  .snotes{font-size:14px;color:var(--mut)}
+  .stag{display:inline-block;font-size:11px;font-weight:700;color:var(--blue);background:#e8edfb;border-radius:8px;padding:2px 6px;margin-left:6px;vertical-align:middle}
+  .del{background:none;border:none;color:var(--red);font-size:20px;padding:4px;flex:none}
+  .calwrap{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:12px}
+  .calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .calhead b{font-size:16px}
+  .calnav{background:none;border:none;color:var(--blue);font-size:22px;padding:2px 12px;font-weight:700}
+  .calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+  .calwd{font-size:11px;color:var(--mut);font-weight:700;padding:2px 0}
+  .cald{position:relative;padding:8px 0;font-size:14px;border-radius:8px;border:none;background:none;color:var(--ink)}
+  .cald.blank{visibility:hidden}
+  .cald.sel{background:var(--blue);color:#fff;font-weight:700}
+  .cald.today{box-shadow:inset 0 0 0 2px var(--blue)}
+  .cald .dot{display:none;position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--amber)}
+  .cald.hasdot .dot{display:block}
+  .cald.sel .dot{background:#fff}
+  .viewer{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:40;display:flex;align-items:center;justify-content:center}
+  .viewer img{max-width:100%;max-height:100%}
+  .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:20px;font-size:15px;z-index:50;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header><h1>Rabbi's Day</h1></header>
+<main>
+  <div id="viewHome" hidden>
+    <div class="clockcard">
+      <div class="clockbig" id="homeClock"></div>
+      <div class="clockdate" id="homeDate"></div>
+    </div>
+    <div id="homeNext"></div>
+    <div class="dayhead">Today</div>
+    <div id="homeList"></div>
+  </div>
+  <div id="viewSchedule" hidden>
+    <div class="dayhead" style="margin-top:4px">Daily routine</div>
+    <div id="routineList"></div>
+    <button class="bigbtn" id="addRoutine">Add to routine</button>
+    <div class="dayhead">Calendar</div>
+    <div class="calwrap" id="calWrap"></div>
+    <div id="apptList"></div>
+    <button class="bigbtn" id="addAppt">Add appointment</button>
+  </div>
+  <div id="viewSettings" hidden>
+    <div class="card">
+      <button class="linkbtn" id="exportData">Back up everything (download file)</button>
+      <button class="linkbtn danger" id="wipeData">Delete everything on this phone</button>
+      <p style="color:var(--mut);font-size:13px">This app lives only on this phone. Back it up now and then with the download button.</p>
+    </div>
+  </div>
+</main>
+<nav>
+  <button id="tabSchedule">Schedule</button>
+  <button id="tabHome" class="homebtn"><span class="homeico">&#8962;</span><span class="hometxt">Home</span></button>
+  <button id="tabSettings">Settings</button>
+</nav>
+
+<div class="modal" id="logModal" hidden>
+  <div class="sheet">
+    <h2 id="logTitle">Log</h2>
+    <div id="logFields"></div>
+    <div class="frow"><label>Photo (required)</label>
+      <input type="file" accept="image/*" capture="environment" id="logPhoto" hidden>
+      <button class="photobtn" id="logPhotoBtn">Take photo</button>
+      <img class="photoPrev" id="logPhotoPrev" hidden alt="">
+    </div>
+    <div class="frow"><label>Notes (optional)</label><textarea id="logNotes" placeholder="Anything worth noting"></textarea></div>
+    <div class="btnrow">
+      <button class="cancelbtn" id="logCancel">Cancel</button>
+      <button class="savebtn" id="logSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="routineModal" hidden>
+  <div class="sheet">
+    <h2>Add to routine</h2>
+    <div class="frow"><label>What is it</label>
+      <select id="rKind"><option value="meds">Meds</option><option value="vitals">Vitals</option><option value="bp">Blood pressure</option><option value="other">Other (prayers, wake up...)</option></select>
+    </div>
+    <div class="frow"><label>Time</label><input type="time" id="rTime"></div>
+    <div class="frow" id="rNameWrap"><label>Name (optional)</label><input type="text" id="rName" placeholder="e.g. Morning meds"></div>
+    <div class="frow" id="rMedsWrap"><label>Which meds (one per line)</label><textarea id="rMeds" placeholder="riluzole 50mg&#10;other med"></textarea></div>
+    <div class="btnrow">
+      <button class="cancelbtn" id="rCancel">Cancel</button>
+      <button class="savebtn" id="rSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="apptModal" hidden>
+  <div class="sheet">
+    <h2>Add appointment</h2>
+    <div class="frow"><label>What</label><input type="text" id="aWhat" placeholder="e.g. Pulmonology appointment"></div>
+    <div class="frow"><label>Date</label><input type="date" id="aDate"></div>
+    <div class="frow"><label>Time (optional)</label><input type="time" id="aTime"></div>
+    <div class="frow"><label>Notes (optional)</label><textarea id="aNotes" rows="2"></textarea></div>
+    <div class="btnrow">
+      <button class="cancelbtn" id="aCancel">Cancel</button>
+      <button class="savebtn" id="aSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="viewer" id="viewer" hidden><img id="viewerImg" alt=""></div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+var KINDS={meds:'Meds',vitals:'Vitals',bp:'Blood pressure',other:'Other'};
+var S=JSON.parse(localStorage.getItem('rd_set')||'null')||{routine:[],appts:[]};
+if(!S.routine)S.routine=[];if(!S.appts)S.appts=[];
+function saveS(){localStorage.setItem('rd_set',JSON.stringify(S));}
+var logs=[];var db=null;
+var logTask=null,logRef=null,logPhoto=null;
+var schedMonth=null,schedSel=null;
+
+function openDB(){return new Promise(function(res,rej){var r=indexedDB.open('rd',1);r.onupgradeneeded=function(e){var d=e.target.result;if(!d.objectStoreNames.contains('logs'))d.createObjectStore('logs',{keyPath:'ts'});};r.onsuccess=function(e){db=e.target.result;res();};r.onerror=function(e){rej(e);};});}
+function idbPut(v){return new Promise(function(res,rej){var t=db.transaction('logs','readwrite');t.objectStore('logs').put(v);t.oncomplete=res;t.onerror=function(){rej(t.error);};});}
+function idbClear(){return new Promise(function(res,rej){var t=db.transaction('logs','readwrite');t.objectStore('logs').clear();t.oncomplete=res;t.onerror=function(){rej(t.error);};});}
+function loadLogs(){return new Promise(function(res,rej){var t=db.transaction('logs','readonly');var rq=t.objectStore('logs').getAll();rq.onsuccess=function(){logs=(rq.result||[]).sort(function(a,b){return b.ts-a.ts;});res();};rq.onerror=function(){rej(rq.error);};});}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmt12(t){var p=t.split(':');var h=parseInt(p[0],10);var mi=p[1]||'00';var ap=h>=12?'pm':'am';var h12=h%12;if(h12===0)h12=12;return h12+':'+mi+' '+ap;}
+function fmtTime(ts){return new Date(ts).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});}
+function fmtDay(ts){return new Date(ts).toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'});}
+function dstr(d){return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function minsOf(t){var p=(t||'').split(':');if(p.length<2)return null;return parseInt(p[0],10)*60+parseInt(p[1],10);}
+function nowMins(){var n=new Date();return n.getHours()*60+n.getMinutes();}
+function todayStart(){var n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate()).getTime();}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2600);}
+function fieldRow(label,name){return '<div class="frow"><label>'+label+'</label><input type="text" inputmode="decimal" id="fld_'+name+'"></div>';}
+function fileToDataURL(file){return new Promise(function(res,rej){var img=new Image();var url=URL.createObjectURL(file);img.onload=function(){try{var max=900;var w=img.width,h=img.height;var sc=Math.min(1,max/Math.max(w,h));var c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.6));}catch(e){rej(e);}};img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('img'));};img.src=url;});}
+
+function doneToday(ref){for(var i=0;i<logs.length;i++){var l=logs[i];if(l.ref===ref&&l.ts>=todayStart())return l;}return null;}
+function timeline(){var out=[];var today=dstr(new Date());var i;
+for(i=0;i<S.routine.length;i++){var it=S.routine[i];out.push({t:it.t,kind:it.kind,label:it.label,sub:(it.meds&&it.meds.length)?it.meds.join(', '):'',ref:it.id});}
+for(i=0;i<S.appts.length;i++){var a=S.appts[i];if(a.d===today)out.push({t:a.t,kind:'appt',label:a.label,sub:a.notes||'',ref:a.id});}
+out.sort(function(x,y){return (x.t||'99:99')<(y.t||'99:99')?-1:1;});return out;}
+
+function tickClock(){var n=new Date();var el=document.getElementById('homeClock');if(el)el.textContent=fmt12(('0'+n.getHours()).slice(-2)+':'+('0'+n.getMinutes()).slice(-2));var d=document.getElementById('homeDate');if(d)d.textContent=n.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});}
+
+function renderHome(){
+tickClock();
+var nextEl=document.getElementById('homeNext');var listEl=document.getElementById('homeList');
+var tl=timeline();var nm=nowMins();
+var nxt=null;for(var i=0;i<tl.length;i++){var mm=minsOf(tl[i].t);if(mm!==null&&mm>=nm){nxt=tl[i];break;}}
+var h='';
+if(nxt){h+='<div class="nextcard"><div class="nexttime">'+(nxt.t?fmt12(nxt.t):'')+'</div><div class="nextlabel">'+esc(nxt.label)+'</div>'+(nxt.sub?'<div class="nextnotes">'+esc(nxt.sub)+'</div>':'');
+if(nxt.kind==='meds')h+='<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-check="'+nxt.ref+'">Check it off</button>';
+if(nxt.kind==='vitals'||nxt.kind==='bp')h+='<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-log="'+nxt.kind+'" data-ref="'+nxt.ref+'">Log it now</button>';
+h+='</div>';}
+else{h+=tl.length?'<div class="empty">All done for today</div>':'<div class="empty">No routine yet. Set it up in the Schedule tab.</div>';}
+nextEl.innerHTML=h;
+var g='';
+for(var k=0;k<tl.length;k++){var x=tl[k];var mm2=minsOf(x.t);var past=(mm2!==null&&mm2<nm);
+if(x.kind==='vitals'||x.kind==='bp'){var st=doneToday(x.ref);
+g+='<div class="checkrow2'+(past?' past':'')+'"><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+(st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:700">&#10003; '+fmtTime(st.ts)+'</div>':'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>')+'</div>';}
+else{var dn=(x.kind==='meds')?doneToday(x.ref):null;
+var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span class="schedlabel">'+esc(x.label)+(dn?' <span class="donemark">&#10003;</span>':'')+(x.sub?'<span class="subline">'+esc(x.sub)+'</span>':'')+'</span>';
+if(x.kind==='meds')g+='<button class="schedrow'+(past?' past':'')+(dn?' done':'')+'" data-check="'+x.ref+'">'+inner+'</button>';
+else g+='<div class="schedrow'+(past?' past':'')+'">'+inner+'</div>';}}
+listEl.innerHTML=g;
+var cbs=listEl.parentNode.querySelectorAll('[data-check]');
+for(var q=0;q<cbs.length;q++){(function(c2){c2.addEventListener('click',function(){var ref=c2.getAttribute('data-check');if(doneToday(ref)){toast('Already checked off');}else saveDone(ref);});})(cbs[q]);}
+var lbs=listEl.parentNode.querySelectorAll('[data-log]');
+for(var z=0;z<lbs.length;z++){(function(b2){b2.addEventListener('click',function(){openLog(b2.getAttribute('data-log'),b2.getAttribute('data-ref'));});})(lbs[z]);}
+}
+
+function saveDone(ref){idbPut({ts:Date.now(),kind:'done',ref:ref}).then(loadLogs).then(function(){renderHome();toast('Checked off');}).catch(function(){toast('Could not save, try again');});}
+
+function openLog(kind,ref){logTask=kind;logRef=ref;logPhoto=null;
+document.getElementById('logTitle').textContent=kind==='vitals'?'Log vitals':'Log blood pressure';
+var f=document.getElementById('logFields');var h='';
+if(kind==='vitals'){h+=fieldRow('Pulse (bpm), optional','pulse');h+=fieldRow('Oxygen (%), optional','o2');h+=fieldRow('Temperature, optional','temp');}
+else{h+=fieldRow('Systolic (top number), optional','sys');h+=fieldRow('Diastolic (bottom number), optional','dia');}
+f.innerHTML=h;
+var p=document.getElementById('logPhotoPrev');p.hidden=true;p.removeAttribute('src');
+document.getElementById('logPhoto').value='';document.getElementById('logPhotoBtn').textContent='Take photo';
+document.getElementById('logNotes').value='';
+document.getElementById('logModal').hidden=false;}
+function closeLog(){document.getElementById('logModal').hidden=true;logTask=null;logRef=null;logPhoto=null;}
+function saveLog(){if(!logTask)return;
+if(!logPhoto){toast('The photo is required');return;}
+var e={ts:Date.now(),kind:logTask,ref:logRef,photo:logPhoto,notes:document.getElementById('logNotes').value.trim(),data:{}};
+if(logTask==='vitals'){var p=document.getElementById('fld_pulse'),o=document.getElementById('fld_o2'),tp=document.getElementById('fld_temp');if(p&&p.value)e.data.pulse=p.value;if(o&&o.value)e.data.o2=o.value;if(tp&&tp.value)e.data.temp=tp.value;}
+else{var s2=document.getElementById('fld_sys'),d2=document.getElementById('fld_dia');if(s2&&s2.value)e.data.sys=s2.value;if(d2&&d2.value)e.data.dia=d2.value;}
+idbPut(e).then(loadLogs).then(function(){closeLog();renderHome();toast('Logged');}).catch(function(){toast('Could not save, try again');});}
+
+function renderSchedule(){
+var rl=document.getElementById('routineList');var h='';
+if(!S.routine.length)h+='<div class="empty">No routine yet. Add wake up, prayers, meds and vitals times.</div>';
+for(var i=0;i<S.routine.length;i++){var it=S.routine[i];var items=(it.meds&&it.meds.length)?it.meds.join(', '):'';
+h+='<div class="card sitem"><div class="stime">'+(it.t?fmt12(it.t):'&mdash;')+'</div><div class="sbody"><div class="slabel">'+esc(it.label)+'<span class="stag">'+KINDS[it.kind]+'</span></div>'+(items?'<div class="snotes">'+esc(items)+'</div>':'')+'</div><button class="del" data-rid="'+it.id+'">&#10005;</button></div>';}
+rl.innerHTML=h;
+var dels=rl.querySelectorAll('button.del');
+for(var j=0;j<dels.length;j++){(function(d2){d2.addEventListener('click',function(){var rid=Number(d2.getAttribute('data-rid'));if(confirm('Remove this from the routine?')){S.routine=S.routine.filter(function(x){return x.id!==rid;});saveS();renderSchedule();toast('Removed');}});})(dels[j]);}
+var wrap=document.getElementById('calWrap');
+if(!schedMonth){var n=new Date();schedMonth=new Date(n.getFullYear(),n.getMonth(),1);}
+if(!schedSel)schedSel=dstr(new Date());
+var y=schedMonth.getFullYear(),m=schedMonth.getMonth();
+var monthName=schedMonth.toLocaleDateString([],{month:'long',year:'numeric'});
+var startDow=new Date(y,m,1).getDay();
+var daysIn=new Date(y,m+1,0).getDate();
+var g='';var wds=['S','M','T','W','T','F','S'];
+for(var i2=0;i2<7;i2++)g+='<div class="calwd">'+wds[i2]+'</div>';
+for(var b=0;b<startDow;b++)g+='<div class="cald blank"></div>';
+for(var dnum=1;dnum<=daysIn;dnum++){
+var ds=y+'-'+('0'+(m+1)).slice(-2)+'-'+('0'+dnum).slice(-2);
+var cls='cald';if(ds===dstr(new Date()))cls+=' today';if(ds===schedSel)cls+=' sel';
+var hasAppt=false;for(var w=0;w<S.appts.length;w++)if(S.appts[w].d===ds)hasAppt=true;
+if(hasAppt)cls+=' hasdot';
+g+='<button class="'+cls+'" data-d="'+ds+'">'+dnum+'<span class="dot"></span></button>';}
+wrap.innerHTML='<div class="calhead"><button class="calnav" id="calPrev">&lsaquo;</button><b>'+monthName+'</b><button class="calnav" id="calNext">&rsaquo;</button></div><div class="calgrid">'+g+'</div>';
+document.getElementById('calPrev').addEventListener('click',function(){schedMonth=new Date(y,m-1,1);renderSchedule();});
+document.getElementById('calNext').addEventListener('click',function(){schedMonth=new Date(y,m+1,1);renderSchedule();});
+var dbs=wrap.querySelectorAll('button.cald');
+for(var j2=0;j2<dbs.length;j2++){(function(b2){b2.addEventListener('click',function(){schedSel=b2.getAttribute('data-d');renderSchedule();});})(dbs[j2]);}
+var al=document.getElementById('apptList');
+var its=S.appts.filter(function(x){return x.d===schedSel;}).sort(function(a,c){return (a.t||'99:99')<(c.t||'99:99')?-1:1;});
+var ah='';var dd=new Date(schedSel+'T12:00');
+ah+='<div class="dayhead">'+dd.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})+'</div>';
+if(!its.length)ah+='<div class="empty">No appointments this day.</div>';
+for(var k2=0;k2<its.length;k2++){var ap=its[k2];
+ah+='<div class="card sitem"><div class="stime">'+(ap.t?fmt12(ap.t):'&mdash;')+'</div><div class="sbody"><div class="slabel">'+esc(ap.label)+'</div>'+(ap.notes?'<div class="snotes">'+esc(ap.notes)+'</div>':'')+'</div><button class="del" data-aid="'+ap.id+'">&#10005;</button></div>';}
+var ups=S.appts.filter(function(x){return x.d>schedSel;}).sort(function(a,c){return (a.d+(a.t||''))<(c.d+(c.t||''))?-1:1;});
+if(ups.length){ah+='<div class="dayhead">Coming up</div>';
+for(var u=0;u<ups.length;u++){var up=ups[u];var ud=new Date(up.d+'T12:00');
+ah+='<div class="card sitem"><div class="stime">'+ud.toLocaleDateString([],{month:'short',day:'numeric'})+'</div><div class="sbody"><div class="slabel">'+esc(up.label)+(up.t?' &middot; '+fmt12(up.t):'')+'</div>'+(up.notes?'<div class="snotes">'+esc(up.notes)+'</div>':'')+'</div><button class="del" data-aid="'+up.id+'">&#10005;</button></div>';}}
+al.innerHTML=ah;
+var adels=al.querySelectorAll('button.del');
+for(var q2=0;q2<adels.length;q2++){(function(d3){d3.addEventListener('click',function(){var aid=Number(d3.getAttribute('data-aid'));if(confirm('Remove this appointment?')){S.appts=S.appts.filter(function(x){return x.id!==aid;});saveS();renderSchedule();toast('Removed');}});})(adels[q2]);}
+}
+
+function openRoutineForm(){document.getElementById('rKind').value='meds';document.getElementById('rTime').value='';document.getElementById('rName').value='';document.getElementById('rMeds').value='';updateRoutineVis();document.getElementById('routineModal').hidden=false;}
+function updateRoutineVis(){var k=document.getElementById('rKind').value;document.getElementById('rMedsWrap').hidden=(k!=='meds');document.getElementById('rNameWrap').hidden=(k==='vitals'||k==='bp');}
+function saveRoutineItem(){var k=document.getElementById('rKind').value;var t=document.getElementById('rTime').value;
+if(!t){toast('Pick a time');return;}
+var label=k==='vitals'?KINDS.vitals:(k==='bp'?KINDS.bp:document.getElementById('rName').value.trim());
+if(!label){toast('Write a name');return;}
+var meds=[];
+if(k==='meds'){meds=document.getElementById('rMeds').value.split('\n').map(function(x){return x.trim();}).filter(Boolean);}
+S.routine.push({id:Date.now(),t:t,kind:k,label:label,meds:meds});
+saveS();document.getElementById('routineModal').hidden=true;renderSchedule();toast('Added to routine');}
+function openApptForm(){document.getElementById('aWhat').value='';document.getElementById('aDate').value=schedSel||dstr(new Date());document.getElementById('aTime').value='';document.getElementById('aNotes').value='';document.getElementById('apptModal').hidden=false;}
+function saveAppt(){var w=document.getElementById('aWhat').value.trim();var d=document.getElementById('aDate').value;
+if(!w){toast('Write what it is');return;}
+if(!d){toast('Pick a date');return;}
+S.appts.push({id:Date.now(),d:d,t:document.getElementById('aTime').value||'',label:w,notes:document.getElementById('aNotes').value.trim()});
+saveS();document.getElementById('apptModal').hidden=true;renderSchedule();toast('Appointment added');}
+
+function exportData(){var blob=new Blob([JSON.stringify({settings:S,logs:logs},null,1)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rabbi-day-backup.json';document.body.appendChild(a);a.click();document.body.removeChild(a);toast('Backup downloaded');}
+function wipeData(){if(confirm('Delete everything on this phone? This cannot be undone.')&&confirm('Really delete everything?')){idbClear().then(function(){S={routine:[],appts:[]};saveS();logs=[];renderHome();renderSchedule();toast('All deleted');});}}
+
+function showTab(name){['Home','Schedule','Settings'].forEach(function(n){document.getElementById('tab'+n).classList.toggle('on',n===name);document.getElementById('view'+n).hidden=(n!==name);});
+if(name==='Home')renderHome();if(name==='Schedule')renderSchedule();}
+
+document.getElementById('tabSchedule').addEventListener('click',function(){showTab('Schedule');});
+document.getElementById('tabHome').addEventListener('click',function(){showTab('Home');});
+document.getElementById('tabSettings').addEventListener('click',function(){showTab('Settings');});
+document.getElementById('addRoutine').addEventListener('click',openRoutineForm);
+document.getElementById('rKind').addEventListener('change',updateRoutineVis);
+document.getElementById('rCancel').addEventListener('click',function(){document.getElementById('routineModal').hidden=true;});
+document.getElementById('rSave').addEventListener('click',saveRoutineItem);
+document.getElementById('addAppt').addEventListener('click',openApptForm);
+document.getElementById('aCancel').addEventListener('click',function(){document.getElementById('apptModal').hidden=true;});
+document.getElementById('aSave').addEventListener('click',saveAppt);
+document.getElementById('logPhotoBtn').addEventListener('click',function(){document.getElementById('logPhoto').click();});
+document.getElementById('logPhoto').addEventListener('change',function(ev){var file=ev.target.files&&ev.target.files[0];if(!file)return;fileToDataURL(file).then(function(url){logPhoto=url;var p=document.getElementById('logPhotoPrev');p.src=url;p.hidden=false;document.getElementById('logPhotoBtn').textContent='Retake photo';}).catch(function(){toast('Could not read that photo');});});
+document.getElementById('logCancel').addEventListener('click',closeLog);
+document.getElementById('logSave').addEventListener('click',saveLog);
+document.getElementById('exportData').addEventListener('click',exportData);
+document.getElementById('wipeData').addEventListener('click',wipeData);
+
+openDB().then(loadLogs).then(function(){showTab('Home');setInterval(function(){renderHome();},30000);setInterval(tickClock,15000);}).catch(function(){document.getElementById('homeList').innerHTML='<div class="empty">Could not open storage on this browser.</div>';});
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
+</body>
+</html>
