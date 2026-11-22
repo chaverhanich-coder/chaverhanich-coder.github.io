@@ -57,6 +57,7 @@
   .schedlabel{font-size:22px;font-weight:700;flex:1;min-width:0}
   .subline{display:block;font-size:14px;color:var(--mut);font-weight:500;margin-top:2px}
   .schedgo{background:#e8edfb;color:var(--blue);border:none;border-radius:12px;font-size:15px;font-weight:700;padding:10px 14px;flex:none}
+  .donemark{color:var(--green);font-weight:800}
   .checkrow2{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(21,32,43,.05)}
   .checkrow2.past{opacity:.45}
   .checkname{font-size:15px;font-weight:700;color:var(--ink)}
@@ -150,6 +151,8 @@
     <div class="frow"><label>Time</label><input type="time" id="rTime"></div>
     <div class="frow" id="rNameWrap"><label>Name (optional)</label><input type="text" id="rName" placeholder="e.g. Morning meds"></div>
     <div class="frow" id="rMedsWrap"><label>Which meds (one per line)</label><textarea id="rMeds" placeholder="riluzole 50mg&#10;other med"></textarea></div>
+    <div class="frow" id="rIvWrap"><label>Repeat every (minutes, optional)</label><input type="number" inputmode="numeric" id="rEvery" placeholder="e.g. 15"></div>
+    <div class="frow" id="rUntilWrap"><label>Until (time to stop repeating)</label><input type="time" id="rUntil"></div>
     <div class="btnrow">
       <button class="cancelbtn" id="rCancel">Cancel</button>
       <button class="savebtn" id="rSave">Save</button>
@@ -202,8 +205,9 @@ function fieldRow(label,name){return '<div class="frow"><label>'+label+'</label>
 function fileToDataURL(file){return new Promise(function(res,rej){var img=new Image();var url=URL.createObjectURL(file);img.onload=function(){try{var max=900;var w=img.width,h=img.height;var sc=Math.min(1,max/Math.max(w,h));var c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.6));}catch(e){rej(e);}};img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('img'));};img.src=url;});}
 
 function doneToday(ref){for(var i=0;i<logs.length;i++){var l=logs[i];if(l.ref===ref&&l.ts>=todayStart())return l;}return null;}
+function expandTimes(it){var ts=[];if(it.iv>0){var s=minsOf(it.t),e=minsOf(it.et),c=0;for(var m=s;m<=e&&c<96;m+=it.iv,c++){ts.push(('0'+Math.floor(m/60)).slice(-2)+':'+('0'+(m%60)).slice(-2));}}else ts.push(it.t);return ts;}
 function timeline(){var out=[];var today=dstr(new Date());var i;
-for(i=0;i<S.routine.length;i++){var it=S.routine[i];out.push({t:it.t,kind:it.kind,label:it.label,sub:(it.meds&&it.meds.length)?it.meds.join(', '):'',ref:it.id});}
+for(i=0;i<S.routine.length;i++){var it=S.routine[i];var subs=(it.meds&&it.meds.length)?it.meds.join(', '):'';var occ=expandTimes(it);for(var o=0;o<occ.length;o++){out.push({t:occ[o],kind:it.kind,label:it.label,sub:subs,ref:(it.iv>0?it.id+':'+occ[o]:it.id)});}}
 for(i=0;i<S.appts.length;i++){var a=S.appts[i];if(a.d===today)out.push({t:a.t,kind:'appt',label:a.label,sub:a.notes||'',ref:a.id});}
 out.sort(function(x,y){return (x.t||'99:99')<(y.t||'99:99')?-1:1;});return out;}
 
@@ -260,7 +264,7 @@ function renderSchedule(){
 var rl=document.getElementById('routineList');var h='';
 if(!S.routine.length)h+='<div class="empty">No routine yet. Add wake up, prayers, meds and vitals times.</div>';
 for(var i=0;i<S.routine.length;i++){var it=S.routine[i];var items=(it.meds&&it.meds.length)?it.meds.join(', '):'';
-h+='<div class="card sitem"><div class="stime">'+(it.t?fmt12(it.t):'&mdash;')+'</div><div class="sbody"><div class="slabel">'+esc(it.label)+'<span class="stag">'+KINDS[it.kind]+'</span></div>'+(items?'<div class="snotes">'+esc(items)+'</div>':'')+'</div><button class="del" data-rid="'+it.id+'">&#10005;</button></div>';}
+h+='<div class="card sitem"><div class="stime">'+(it.t?fmt12(it.t):'&mdash;')+'</div><div class="sbody"><div class="slabel">'+esc(it.label)+'<span class="stag">'+KINDS[it.kind]+'</span></div>'+(items?'<div class="snotes">'+esc(items)+'</div>':'')+(it.iv?'<div class="snotes">every '+it.iv+' min until '+fmt12(it.et)+'</div>':'')+'</div><button class="del" data-rid="'+it.id+'">&#10005;</button></div>';}
 rl.innerHTML=h;
 var dels=rl.querySelectorAll('button.del');
 for(var j=0;j<dels.length;j++){(function(d2){d2.addEventListener('click',function(){var rid=Number(d2.getAttribute('data-rid'));if(confirm('Remove this from the routine?')){S.routine=S.routine.filter(function(x){return x.id!==rid;});saveS();renderSchedule();toast('Removed');}});})(dels[j]);}
@@ -301,15 +305,17 @@ var adels=al.querySelectorAll('button.del');
 for(var q2=0;q2<adels.length;q2++){(function(d3){d3.addEventListener('click',function(){var aid=Number(d3.getAttribute('data-aid'));if(confirm('Remove this appointment?')){S.appts=S.appts.filter(function(x){return x.id!==aid;});saveS();renderSchedule();toast('Removed');}});})(adels[q2]);}
 }
 
-function openRoutineForm(){document.getElementById('rKind').value='meds';document.getElementById('rTime').value='';document.getElementById('rName').value='';document.getElementById('rMeds').value='';updateRoutineVis();document.getElementById('routineModal').hidden=false;}
-function updateRoutineVis(){var k=document.getElementById('rKind').value;document.getElementById('rMedsWrap').hidden=(k!=='meds');document.getElementById('rNameWrap').hidden=(k==='vitals'||k==='bp');}
+function openRoutineForm(){document.getElementById('rKind').value='meds';document.getElementById('rTime').value='';document.getElementById('rName').value='';document.getElementById('rMeds').value='';document.getElementById('rEvery').value='';document.getElementById('rUntil').value='22:00';updateRoutineVis();document.getElementById('routineModal').hidden=false;}
+function updateRoutineVis(){var k=document.getElementById('rKind').value;document.getElementById('rMedsWrap').hidden=(k!=='meds');document.getElementById('rNameWrap').hidden=(k==='vitals'||k==='bp');document.getElementById('rIvWrap').hidden=(k==='other');document.getElementById('rUntilWrap').hidden=(k==='other');}
 function saveRoutineItem(){var k=document.getElementById('rKind').value;var t=document.getElementById('rTime').value;
 if(!t){toast('Pick a time');return;}
 var label=k==='vitals'?KINDS.vitals:(k==='bp'?KINDS.bp:document.getElementById('rName').value.trim());
 if(!label){toast('Write a name');return;}
 var meds=[];
 if(k==='meds'){meds=document.getElementById('rMeds').value.split('\n').map(function(x){return x.trim();}).filter(Boolean);}
-S.routine.push({id:Date.now(),t:t,kind:k,label:label,meds:meds});
+var iv=0,et='';
+if(k!=='other'){var ev=parseInt(document.getElementById('rEvery').value,10);if(ev>0){iv=ev;et=document.getElementById('rUntil').value||'22:00';if(minsOf(et)<=minsOf(t)){toast('The until time must be after the start time');return;}}}
+S.routine.push({id:Date.now(),t:t,kind:k,label:label,meds:meds,iv:iv,et:et});
 saveS();document.getElementById('routineModal').hidden=true;renderSchedule();toast('Added to routine');}
 function openApptForm(){document.getElementById('aWhat').value='';document.getElementById('aDate').value=schedSel||dstr(new Date());document.getElementById('aTime').value='';document.getElementById('aNotes').value='';document.getElementById('apptModal').hidden=false;}
 function saveAppt(){var w=document.getElementById('aWhat').value.trim();var d=document.getElementById('aDate').value;
