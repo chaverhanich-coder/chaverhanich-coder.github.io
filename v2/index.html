@@ -205,6 +205,7 @@ function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.c
 function fieldRow(label,name){return '<div class="frow"><label>'+label+'</label><input type="text" inputmode="decimal" id="fld_'+name+'"></div>';}
 function fileToDataURL(file){return new Promise(function(res,rej){var img=new Image();var url=URL.createObjectURL(file);img.onload=function(){try{var max=900;var w=img.width,h=img.height;var sc=Math.min(1,max/Math.max(w,h));var c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.6));}catch(e){rej(e);}};img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('img'));};img.src=url;});}
 
+function nextSameTime(tl,idx){var base=String(tl[idx].ref).split(':')[0];for(var j=idx+1;j<tl.length;j++){var mm=minsOf(tl[j].t);if(mm!==null&&String(tl[j].ref).split(':')[0]===base)return mm;}return null;}
 function doneToday(ref){for(var i=0;i<logs.length;i++){var l=logs[i];if(String(l.ref)===String(ref)&&l.ts>=todayStart())return l;}return null;}
 function expandTimes(it){var ts=[];if(it.iv>0){var s=minsOf(it.t),e=minsOf(it.et),c=0;for(var m=s;m<=e&&c<96;m+=it.iv,c++){ts.push(('0'+Math.floor(m/60)).slice(-2)+':'+('0'+(m%60)).slice(-2));}}else ts.push(it.t);return ts;}
 function timeline(){var out=[];var today=dstr(new Date());var i;
@@ -229,10 +230,12 @@ nextEl.innerHTML=h;
 var g='';
 for(var k=0;k<tl.length;k++){var x=tl[k];var mm2=minsOf(x.t);var past=(mm2!==null&&mm2<nm);
 if(x.kind==='vitals'||x.kind==='bp'){var st=doneToday(x.ref);
-var due2=(mm2!==null&&mm2<=nm&&!st);
+var nx2=nextSameTime(tl,k);
+var due2=(mm2!==null&&mm2<=nm&&!st&&(nx2===null||nx2>nm));
 g+='<div class="checkrow2'+(past?' past':'')+(st?' done':'')+(due2?' due':'')+'"'+(st?' data-view="'+st.ts+'"':'')+'><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+(st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:800">&#10003; Done &middot; '+fmtTime(st.ts)+'</div>':'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>')+'</div>';}
 else{var dn=(x.kind==='meds')?doneToday(x.ref):null;
-var due=(mm2!==null&&mm2<=nm&&!dn);
+var nx1=nextSameTime(tl,k);
+var due=(mm2!==null&&mm2<=nm&&!dn&&(nx1===null||nx1>nm));
 var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span class="schedlabel">'+esc(x.label)+(x.sub?'<span class="subline">'+esc(x.sub)+'</span>':'')+'</span>'+(dn?'<span class="donechip">&#10003; Done &middot; '+fmtTime(dn.ts)+'</span>':'');
 if(x.kind==='meds')g+='<button class="schedrow'+(past?' past':'')+(dn?' done':'')+(due?' due':'')+'" data-check="'+x.ref+'">'+inner+'</button>';
 else g+='<div class="schedrow'+(past?' past':'')+(due?' due':'')+'">'+inner+'</div>';}}
@@ -302,7 +305,7 @@ ah+='<div class="card sitem"><div class="stime">'+(ap.t?fmt12(ap.t):'&mdash;')+'
 var ups=S.appts.filter(function(x){return x.d>schedSel;}).sort(function(a,c){return (a.d+(a.t||''))<(c.d+(c.t||''))?-1:1;});
 if(ups.length){ah+='<div class="dayhead">Coming up</div>';
 for(var u=0;u<ups.length;u++){var up=ups[u];var ud=new Date(up.d+'T12:00');
-ah+='<div class="card sitem"><div class="stime">'+ud.toLocaleDateString([],{month:'short',day:'numeric'})+'</div><div class="sbody"><div class="slabel">'+esc(up.label)+(up.t?' &middot; '+fmt12(up.t):'')+'</div>'+(up.notes?'<div class="snotes">'+esc(ap.notes||up.notes)+'</div>':'')+'</div><button class="del" data-aid="'+up.id+'">&#10005;</button></div>';}}
+ah+='<div class="card sitem"><div class="stime">'+ud.toLocaleDateString([],{month:'short',day:'numeric'})+'</div><div class="sbody"><div class="slabel">'+esc(up.label)+(up.t?' &middot; '+fmt12(up.t):'')+'</div>'+(up.notes?'<div class="snotes">'+esc(up.notes)+'</div>':'')+'</div><button class="del" data-aid="'+up.id+'">&#10005;</button></div>';}}
 al.innerHTML=ah;
 var adels=al.querySelectorAll('button.del');
 for(var q2=0;q2<adels.length;q2++){(function(d3){d3.addEventListener('click',function(){var aid=Number(d3.getAttribute('data-aid'));if(confirm('Remove this appointment?')){S.appts=S.appts.filter(function(x){return x.id!==aid;});saveS();renderSchedule();toast('Removed');}});})(adels[q2]);}
