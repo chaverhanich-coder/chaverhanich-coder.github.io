@@ -52,7 +52,7 @@
   .schedrow.past{opacity:.45}
   .schedrow.done{background:#eaf6ef;border:1px solid #c4e6d0;box-shadow:none}
   .donechip{flex:none;background:#1e7f4f;color:#fff;font-size:15px;font-weight:800;border-radius:10px;padding:6px 10px}
-  .checkrow2.done{background:#eaf6ef;border:1px solid #c4e6d0;box-shadow:none}
+  .checkrow2.done{background:#eaf6ef;border:1px solid #c4e6d0;box-shadow:none;cursor:pointer}
   .schedtime{font-size:22px;font-weight:800;color:var(--blue);flex:none;width:100px}
   .schedlabel{font-size:22px;font-weight:700;flex:1;min-width:0}
   .subline{display:block;font-size:14px;color:var(--mut);font-weight:500;margin-top:2px}
@@ -226,7 +226,7 @@ nextEl.innerHTML=h;
 var g='';
 for(var k=0;k<tl.length;k++){var x=tl[k];var mm2=minsOf(x.t);var past=(mm2!==null&&mm2<nm);
 if(x.kind==='vitals'||x.kind==='bp'){var st=doneToday(x.ref);
-g+='<div class="checkrow2'+(past?' past':'')+(st?' done':'')+'"><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+(st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:800">&#10003; Done &middot; '+fmtTime(st.ts)+'</div>':'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>')+'</div>';}
+g+='<div class="checkrow2'+(past?' past':'')+(st?' done':'')+'"'+(st?' data-view="'+st.ts+'"':'')+'><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+(st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:800">&#10003; Done &middot; '+fmtTime(st.ts)+'</div>':'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>')+'</div>';}
 else{var dn=(x.kind==='meds')?doneToday(x.ref):null;
 var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span class="schedlabel">'+esc(x.label)+(x.sub?'<span class="subline">'+esc(x.sub)+'</span>':'')+'</span>'+(dn?'<span class="donechip">&#10003; Done</span>':'');
 if(x.kind==='meds')g+='<button class="schedrow'+(past?' past':'')+(dn?' done':'')+'" data-check="'+x.ref+'">'+inner+'</button>';
@@ -236,7 +236,13 @@ var cbs=listEl.parentNode.querySelectorAll('[data-check]');
 for(var q=0;q<cbs.length;q++){(function(c2){c2.addEventListener('click',function(){var ref=c2.getAttribute('data-check');if(doneToday(ref)){toast('Already checked off');}else saveDone(ref);});})(cbs[q]);}
 var lbs=listEl.parentNode.querySelectorAll('[data-log]');
 for(var z=0;z<lbs.length;z++){(function(b2){b2.addEventListener('click',function(){openLog(b2.getAttribute('data-log'),b2.getAttribute('data-ref'));});})(lbs[z]);}
+var vws=listEl.parentNode.querySelectorAll('[data-view]');
+for(var v=0;v<vws.length;v++){(function(d4){d4.addEventListener('click',function(){openViewer(Number(d4.getAttribute('data-view')));});})(vws[v]);}
 }
+
+function openViewer(ts){var l=null;for(var i=0;i<logs.length;i++){if(logs[i].ts===ts){l=logs[i];break;}}
+if(!l||!l.photo){toast('No photo for that entry');return;}
+document.getElementById('viewerImg').src=l.photo;document.getElementById('viewer').hidden=false;}
 
 function saveDone(ref){idbPut({ts:Date.now(),kind:'done',ref:ref}).then(loadLogs).then(function(){renderHome();toast('Checked off');}).catch(function(){toast('Could not save, try again');});}
 
@@ -336,6 +342,7 @@ document.getElementById('logPhotoBtn').addEventListener('click',function(){docum
 document.getElementById('logPhoto').addEventListener('change',function(ev){var file=ev.target.files&&ev.target.files[0];if(!file)return;fileToDataURL(file).then(function(url){logPhoto=url;var p=document.getElementById('logPhotoPrev');p.src=url;p.hidden=false;document.getElementById('logPhotoBtn').textContent='Retake photo';}).catch(function(){toast('Could not read that photo');});});
 document.getElementById('logCancel').addEventListener('click',closeLog);
 document.getElementById('logSave').addEventListener('click',saveLog);
+document.getElementById('viewer').addEventListener('click',function(){document.getElementById('viewer').hidden=true;document.getElementById('viewerImg').removeAttribute('src');});
 document.getElementById('exportData').addEventListener('click',exportData);
 document.getElementById('wipeData').addEventListener('click',wipeData);
 
