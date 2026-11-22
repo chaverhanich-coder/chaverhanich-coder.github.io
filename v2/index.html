@@ -233,7 +233,7 @@ var due2=(mm2!==null&&mm2<=nm&&!st);
 g+='<div class="checkrow2'+(past?' past':'')+(st?' done':'')+(due2?' due':'')+'"'+(st?' data-view="'+st.ts+'"':'')+'><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+(st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:800">&#10003; Done &middot; '+fmtTime(st.ts)+'</div>':'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>')+'</div>';}
 else{var dn=(x.kind==='meds')?doneToday(x.ref):null;
 var due=(mm2!==null&&mm2<=nm&&!dn);
-var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span class="schedlabel">'+esc(x.label)+(x.sub?'<span class="subline">'+esc(x.sub)+'</span>':'')+'</span>'+(dn?'<span class="donechip">&#10003; Done</span>':'');
+var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span class="schedlabel">'+esc(x.label)+(x.sub?'<span class="subline">'+esc(x.sub)+'</span>':'')+'</span>'+(dn?'<span class="donechip">&#10003; Done &middot; '+fmtTime(dn.ts)+'</span>':'');
 if(x.kind==='meds')g+='<button class="schedrow'+(past?' past':'')+(dn?' done':'')+(due?' due':'')+'" data-check="'+x.ref+'">'+inner+'</button>';
 else g+='<div class="schedrow'+(past?' past':'')+(due?' due':'')+'">'+inner+'</div>';}}
 listEl.innerHTML=g;
@@ -302,7 +302,7 @@ ah+='<div class="card sitem"><div class="stime">'+(ap.t?fmt12(ap.t):'&mdash;')+'
 var ups=S.appts.filter(function(x){return x.d>schedSel;}).sort(function(a,c){return (a.d+(a.t||''))<(c.d+(c.t||''))?-1:1;});
 if(ups.length){ah+='<div class="dayhead">Coming up</div>';
 for(var u=0;u<ups.length;u++){var up=ups[u];var ud=new Date(up.d+'T12:00');
-ah+='<div class="card sitem"><div class="stime">'+ud.toLocaleDateString([],{month:'short',day:'numeric'})+'</div><div class="sbody"><div class="slabel">'+esc(up.label)+(up.t?' &middot; '+fmt12(up.t):'')+'</div>'+(up.notes?'<div class="snotes">'+esc(up.notes)+'</div>':'')+'</div><button class="del" data-aid="'+up.id+'">&#10005;</button></div>';}}
+ah+='<div class="card sitem"><div class="stime">'+ud.toLocaleDateString([],{month:'short',day:'numeric'})+'</div><div class="sbody"><div class="slabel">'+esc(up.label)+(up.t?' &middot; '+fmt12(up.t):'')+'</div>'+(up.notes?'<div class="snotes">'+esc(ap.notes||up.notes)+'</div>':'')+'</div><button class="del" data-aid="'+up.id+'">&#10005;</button></div>';}}
 al.innerHTML=ah;
 var adels=al.querySelectorAll('button.del');
 for(var q2=0;q2<adels.length;q2++){(function(d3){d3.addEventListener('click',function(){var aid=Number(d3.getAttribute('data-aid'));if(confirm('Remove this appointment?')){S.appts=S.appts.filter(function(x){return x.id!==aid;});saveS();renderSchedule();toast('Removed');}});})(adels[q2]);}
