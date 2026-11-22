@@ -42,6 +42,7 @@
   .medcheck{display:flex;flex-wrap:wrap;gap:8px}
   .medcheck label{display:flex;align-items:center;gap:6px;background:#eef2f7;border:1px solid var(--line);border-radius:20px;padding:8px 13px;font-size:15px;font-weight:500;margin:0}
   .medcheck input{width:20px;height:20px}
+  .medtime{color:var(--mut);font-weight:700;font-size:12px;margin-left:2px}
   .photobtn{display:block;width:100%;border:2px dashed var(--mut);border-radius:12px;background:#f8fafc;color:var(--mut);font-size:16px;font-weight:600;padding:18px;text-align:center}
   .photoPrev{width:100%;border-radius:12px;margin-top:8px;display:block}
   .btnrow{display:flex;gap:10px;margin-top:14px}
@@ -88,7 +89,7 @@
   <div id="viewSettings" hidden>
     <div class="card settings">
       <div class="frow"><label>Aides (one per line)</label><textarea id="setAides" rows="3"></textarea></div>
-      <div class="frow"><label>Medications (one per line)</label><textarea id="setMeds" rows="4" placeholder="e.g. riluzole 50mg"></textarea></div>
+      <div class="frow"><label>Medications (one per line, add a time like @ 8am)</label><textarea id="setMeds" rows="4" placeholder="e.g. riluzole 50mg @ 8am"></textarea></div>
       <div class="frow"><label>Vitals interval (minutes)</label><input type="number" id="setIvVitals" inputmode="numeric"></div>
       <div class="frow"><label>Blood pressure interval (minutes)</label><input type="number" id="setIvBp" inputmode="numeric"></div>
       <div class="frow"><label>Medication interval (minutes)</label><input type="number" id="setIvMeds" inputmode="numeric"></div>
@@ -115,10 +116,16 @@
     <div id="fFields"></div>
     <div class="frow"><label>Notes (optional)</label><textarea id="fNotes" placeholder="Anything worth noting"></textarea></div>
     <div class="frow">
-      <label>Photo (required)</label>
+      <label id="fPhotoLbl">Photo (required)</label>
       <input type="file" accept="image/*" capture="environment" id="fPhoto" hidden>
       <button class="photobtn" id="fPhotoBtn">Take photo</button>
       <img class="photoPrev" id="fPhotoPrev" hidden alt="">
+    </div>
+    <div class="frow" id="fPhoto2Wrap" hidden>
+      <label>Photo: temperature (required)</label>
+      <input type="file" accept="image/*" capture="environment" id="fPhoto2" hidden>
+      <button class="photobtn" id="fPhoto2Btn">Take photo</button>
+      <img class="photoPrev" id="fPhoto2Prev" hidden alt="">
     </div>
     <div class="btnrow">
       <button class="cancelbtn" id="fCancel">Cancel</button>
@@ -134,8 +141,9 @@
 var TASKS=[{id:'vitals',label:'Vitals'},{id:'bp',label:'Blood pressure'},{id:'meds',label:'Medications'}];
 var DEF={aide:'',aides:['Victor','Roel','Enzo','Other'],meds:[],intervals:{vitals:20,bp:60,meds:120}};
 var S=JSON.parse(localStorage.getItem('rcl_set')||'null')||JSON.parse(JSON.stringify(DEF));
+if(S.meds&&S.meds.length&&typeof S.meds[0]==='string')S.meds=S.meds.map(parseMedLine);
 function saveS(){localStorage.setItem('rcl_set',JSON.stringify(S));}
-var entries=[];var db=null;var modalTask=null;var modalPhoto=null;
+var entries=[];var db=null;var modalTask=null;var modalPhoto=null;var modalPhoto2=null;
 var announced={vitals:false,bp:false,meds:false};
 var fTask='all',fAide='all';
 
@@ -157,7 +165,7 @@ if(leftm<=2)return{cls:'st-amber',main:'Due now',sub:'',over:false,last:l};
 return{cls:'st-green',main:leftm+'m left',sub:'',over:false,last:l};}
 
 function renderDash(){var d=document.getElementById('dashboard');var h='';for(var i=0;i<TASKS.length;i++){var t=TASKS[i];var st=taskState(t.id);var l=st.last;var lastTxt=l?('Last: '+ago(l.ts)+' by '+(l.aide||'?')):'No entry yet';
-h+='<div class="card taskcard'+(st.over?' overdue':'')+'">'
+h+='<div class="card taskcard'+(st.over?' overdue':'')+'"'
 +'<div class="taskrow"><div><div class="taskname">'+t.label+'</div><div class="every">every '+(S.intervals[t.id]||60)+' min</div></div>'
 +'<div class="status '+st.cls+'">'+st.main+'</div></div>'
 +'<div class="last">'+lastTxt+'</div>'
@@ -167,36 +175,46 @@ d.innerHTML=h;var bs=d.querySelectorAll('button[data-task]');for(var j=0;j<bs.le
 
 function fieldRow(label,name,ph){return '<div class="frow"><label>'+label+'</label><input type="text" inputmode="decimal" id="fld_'+name+'" placeholder="'+(ph||'')+'"></div>';}
 
-function openForm(task){modalTask=task;modalPhoto=null;
+function openForm(task){modalTask=task;modalPhoto=null;modalPhoto2=null;document.getElementById('fPhotoLbl').textContent=task==='vitals'?'Photo: O2 & heart rate (required)':'Photo (required)';document.getElementById('fPhoto2Wrap').hidden=(task!=='vitals');
 var f=document.getElementById('fFields');var h='';
 if(task==='vitals'){h+=fieldRow('Pulse (bpm)','pulse');h+=fieldRow('Oxygen (%)','o2');h+=fieldRow('Temperature','temp');}
 if(task==='bp'){h+=fieldRow('Systolic (top number)','sys');h+=fieldRow('Diastolic (bottom number)','dia');}
 if(task==='meds'){var meds=S.meds||[];if(!meds.length){h+='<div class="frow" style="color:var(--mut)">No med list yet. Add medications in Settings.</div>';}
-else{h+='<div class="frow"><label>Medications given</label><div class="medcheck">';for(var i=0;i<meds.length;i++){h+='<label><input type="checkbox" class="medcb" value="'+meds[i].replace(/"/g,'&quot;')+'">'+meds[i]+'</label>';}h+='</div></div>';}}
+else{h+='<div class="frow"><label>Medications given</label><div class="medcheck">';for(var i=0;i<meds.length;i++){var mn=medName(meds[i]);var mt=medTime(meds[i]);h+='<label><input type="checkbox" class="medcb" value="'+mn.replace(/"/g,'&quot;')+'">'+esc(mn)+(mt?' <span class="medtime">'+esc(mt)+'</span>':'')+'</label>';}h+='</div></div>';}}
 f.innerHTML=h;
 document.getElementById('fTitle').textContent='Log '+taskLabel(task);
-document.getElementById('fSub').textContent='By '+(S.aide||'no aide picked')+' \u00b7 '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+document.getElementById('fSub').textContent='By '+(S.aide||'no aide picked')+' · '+new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
 var p=document.getElementById('fPhotoPrev');p.hidden=true;p.removeAttribute('src');
 document.getElementById('fPhoto').value='';
+document.getElementById('fPhotoBtn').textContent='Take photo';
+var p2=document.getElementById('fPhoto2Prev');p2.hidden=true;p2.removeAttribute('src');
+document.getElementById('fPhoto2').value='';
+document.getElementById('fPhoto2Btn').textContent='Take photo';
 document.getElementById('fNotes').value='';
 document.getElementById('modal').hidden=false;}
 
-function closeForm(){document.getElementById('modal').hidden=true;modalTask=null;modalPhoto=null;}
+function closeForm(){document.getElementById('modal').hidden=true;modalTask=null;modalPhoto=null;modalPhoto2=null;}
 
 function pickPhoto(){document.getElementById('fPhoto').click();}
 function onPhotoPicked(ev){var file=ev.target.files&&ev.target.files[0];if(!file)return;fileToDataURL(file).then(function(url){modalPhoto=url;var p=document.getElementById('fPhotoPrev');p.src=url;p.hidden=false;document.getElementById('fPhotoBtn').textContent='Retake photo';}).catch(function(){toast('Could not read that photo');});}
+function pickPhoto2(){document.getElementById('fPhoto2').click();}
+function onPhotoPicked2(ev){var file=ev.target.files&&ev.target.files[0];if(!file)return;fileToDataURL(file).then(function(url){modalPhoto2=url;var p=document.getElementById('fPhoto2Prev');p.src=url;p.hidden=false;document.getElementById('fPhoto2Btn').textContent='Retake photo';}).catch(function(){toast('Could not read that photo');});}
+function medName(m){return (typeof m==='string')?m:(m.n||'');}
+function medTime(m){return (typeof m==='string')?'':(m.t||'');}
+function parseMedLine(x){var mm=x.match(/^(.*?)\s*@\s*(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?))$/i);if(mm)return{n:mm[1].trim(),t:mm[2].replace(/\s+/g,'').toLowerCase()};return{n:x.trim(),t:''};}
 function fileToDataURL(file){return new Promise(function(res,rej){var img=new Image();var url=URL.createObjectURL(file);img.onload=function(){try{var max=900;var w=img.width,h=img.height;var sc=Math.min(1,max/Math.max(w,h));var c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.6));}catch(e){rej(e);}};img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('img'));};img.src=url;});}
 
 function saveEntry(){if(!modalTask)return;
 if(!S.aide){closeForm();toast('Pick who is logging first');pickAide();return;}
 if(!modalPhoto){toast('A photo is required for every entry');return;}
-var e={ts:Date.now(),task:modalTask,aide:S.aide,notes:document.getElementById('fNotes').value.trim(),photo:modalPhoto,data:{}};
+if(modalTask==='vitals'&&!modalPhoto2){toast('For vitals add the temperature photo too');return;}
+var e={ts:Date.now(),task:modalTask,aide:S.aide,notes:document.getElementById('fNotes').value.trim(),photo:modalPhoto,photo2:(modalTask==='vitals'?modalPhoto2:null),data:{}};
 if(modalTask==='vitals'){var p=document.getElementById('fld_pulse'),o=document.getElementById('fld_o2'),tp=document.getElementById('fld_temp');if(p&&p.value)e.data.pulse=p.value;if(o&&o.value)e.data.o2=o.value;if(tp&&tp.value)e.data.temp=tp.value;}
 if(modalTask==='bp'){var s=document.getElementById('fld_sys'),d=document.getElementById('fld_dia');if(s&&s.value)e.data.sys=s.value;if(d&&d.value)e.data.dia=d.value;}
 if(modalTask==='meds'){var cbs=document.querySelectorAll('.medcb:checked');var g=[];for(var i=0;i<cbs.length;i++)g.push(cbs[i].value);e.data.meds=g;}
 idbPut(e).then(function(){announced[modalTask]=false;closeForm();return loadEntries();}).then(function(){renderDash();toast('Saved');}).catch(function(){toast('Could not save, try again');});}
 
-function detailLine(e){var d=e.data||{};var bits=[];if(d.sys||d.dia)bits.push('BP '+(d.sys||'?')+'/'+(d.dia||'?'));if(d.pulse)bits.push('pulse '+d.pulse);if(d.o2)bits.push('O2 '+d.o2+'%');if(d.temp)bits.push('temp '+d.temp);if(d.meds&&d.meds.length)bits.push('gave: '+d.meds.join(', '));return bits.join(' \u00b7 ');}
+function detailLine(e){var d=e.data||{};var bits=[];if(d.sys||d.dia)bits.push('BP '+(d.sys||'?')+'/'+(d.dia||'?'));if(d.pulse)bits.push('pulse '+d.pulse);if(d.o2)bits.push('O2 '+d.o2+'%');if(d.temp)bits.push('temp '+d.temp);if(d.meds&&d.meds.length)bits.push('gave: '+d.meds.join(', '));return bits.join(' · ');}
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function bindChips(el,cb){var cs=el.querySelectorAll('.chip');for(var i=0;i<cs.length;i++){(function(c){c.addEventListener('click',function(){cb(c.getAttribute('data-v'));});})(cs[i]);}}
@@ -215,18 +233,18 @@ if(fAide!=='all'&&e.aide!==fAide)continue;
 var day=fmtDay(e.ts);
 if(day!==lastDay){h+='<div class="dayhead">'+day+'</div>';lastDay=day;}
 var det=detailLine(e);
-h+='<div class="card entry"><img class="thumb" src="'+e.photo+'" data-ts="'+e.ts+'" alt="">'
+h+='<div class="card entry"><img class="thumb" src="'+e.photo+'" data-ts="'+e.ts+'" alt="">'+(e.photo2?'<img class="thumb" src="'+e.photo2+'" alt="">':'')
 +'<div class="ebody"><div class="etime">'+fmtTime(e.ts)+' · <span class="etask">'+taskLabel(e.task)+'</span> · '+e.aide+'</div>'
 +(det?'<div class="edetail">'+det+'</div>':'')
 +(e.notes?'<div class="enotes">'+esc(e.notes)+'</div>':'')
-+'</div><button class="del" data-ts="'+e.ts+'">\u2715</button></div>';}
++'</div><button class="del" data-ts="'+e.ts+'">✕</button></div>';}
 list.innerHTML=h;
 var thumbs=list.querySelectorAll('img.thumb');for(var j=0;j<thumbs.length;j++){(function(th){th.addEventListener('click',function(){showViewer(th.src);});})(thumbs[j]);}
 var dels=list.querySelectorAll('button.del');for(var k=0;k<dels.length;k++){(function(dl){dl.addEventListener('click',function(){var ts=Number(dl.getAttribute('data-ts'));if(confirm('Delete this entry?')){idbDel(ts).then(loadEntries).then(function(){renderDash();renderHistory();toast('Deleted');});}});})(dels[k]);}}
 
 function todaySummary(){var now=new Date();var start=new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();var es=entries.filter(function(e){return e.ts>=start;}).sort(function(a,b){return a.ts-b.ts;});if(!es.length)return null;
-var out='Rabbi care log \u2014 '+now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})+'\n';
-for(var i=0;i<es.length;i++){var e=es[i];out+=fmtTime(e.ts)+' '+taskLabel(e.task)+' ('+e.aide+')';var det=detailLine(e);if(det)out+=' \u2014 '+det;if(e.notes)out+=' \u2014 '+e.notes;out+='\n';}
+var out='Rabbi care log — '+now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'})+'\n';
+for(var i=0;i<es.length;i++){var e=es[i];out+=fmtTime(e.ts)+' '+taskLabel(e.task)+' ('+e.aide+')';var det=detailLine(e);if(det)out+=' — '+det;if(e.notes)out+=' — '+e.notes;out+='\n';}
 return out;}
 function doShare(){var s=todaySummary();if(!s){toast('Nothing logged today yet');return;}if(navigator.share){navigator.share({text:s}).catch(function(){});}else{copyText(s);}}
 function doCopy(){var s=todaySummary();if(!s){toast('Nothing logged today yet');return;}copyText(s);}
@@ -237,11 +255,11 @@ function pickAide(){var names=(S.aides&&S.aides.length?S.aides:['Victor','Roel',
 function renderChip(){document.getElementById('aideChip').textContent=S.aide||'Pick aide';}
 
 function saveSettings(){var a=document.getElementById('setAides').value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
-var m=document.getElementById('setMeds').value.split('\n').map(function(x){return x.trim();}).filter(Boolean);
+var m=document.getElementById('setMeds').value.split('\n').map(function(x){return x.trim();}).filter(Boolean).map(parseMedLine);
 var iv={vitals:parseInt(document.getElementById('setIvVitals').value,10)||S.intervals.vitals,bp:parseInt(document.getElementById('setIvBp').value,10)||S.intervals.bp,meds:parseInt(document.getElementById('setIvMeds').value,10)||S.intervals.meds};
 S.aides=a.length?a:S.aides;S.meds=m;S.intervals=iv;if(S.aide&&a.length&&a.indexOf(S.aide)<0)S.aide='';
 saveS();renderChip();renderDash();fillSettings();toast('Settings saved');}
-function fillSettings(){document.getElementById('setAides').value=(S.aides||[]).join('\n');document.getElementById('setMeds').value=(S.meds||[]).join('\n');document.getElementById('setIvVitals').value=S.intervals.vitals;document.getElementById('setIvBp').value=S.intervals.bp;document.getElementById('setIvMeds').value=S.intervals.meds;}
+function fillSettings(){document.getElementById('setAides').value=(S.aides||[]).join('\n');document.getElementById('setMeds').value=(S.meds||[]).map(function(x){return medName(x)+(medTime(x)?' @ '+medTime(x):'');}).join('\n');document.getElementById('setIvVitals').value=S.intervals.vitals;document.getElementById('setIvBp').value=S.intervals.bp;document.getElementById('setIvMeds').value=S.intervals.meds;}
 
 function exportData(){var blob=new Blob([JSON.stringify({settings:S,entries:entries},null,1)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rabbi-care-log-backup.json';document.body.appendChild(a);a.click();document.body.removeChild(a);toast('Backup downloaded');}
 function wipeData(){if(confirm('Delete every entry on this phone? This cannot be undone.')&&confirm('Really delete everything?')){var t=db.transaction('entries','readwrite');t.objectStore('entries').clear();t.oncomplete=function(){entries=[];renderDash();renderHistory();toast('All entries deleted');};}}
@@ -258,6 +276,8 @@ document.getElementById('tabHistory').addEventListener('click',function(){showTa
 document.getElementById('tabSettings').addEventListener('click',function(){showTab('Settings');});
 document.getElementById('fPhotoBtn').addEventListener('click',pickPhoto);
 document.getElementById('fPhoto').addEventListener('change',onPhotoPicked);
+document.getElementById('fPhoto2Btn').addEventListener('click',pickPhoto2);
+document.getElementById('fPhoto2').addEventListener('change',onPhotoPicked2);
 document.getElementById('fCancel').addEventListener('click',closeForm);
 document.getElementById('fSave').addEventListener('click',saveEntry);
 document.getElementById('saveSettings').addEventListener('click',saveSettings);
