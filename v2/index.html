@@ -50,12 +50,13 @@
   .nextnotes{font-size:15px;color:var(--mut);margin-top:4px}
   .schedrow{display:flex;align-items:center;gap:12px;background:var(--card);border:none;border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(21,32,43,.06);width:100%;text-align:left}
   .schedrow.past{opacity:.45}
-  .schedrow.done{opacity:.55}
+  .schedrow.done{background:#eaf6ef;border:1px solid #c4e6d0;box-shadow:none}
+  .donechip{flex:none;background:#1e7f4f;color:#fff;font-size:15px;font-weight:800;border-radius:10px;padding:6px 10px}
+  .checkrow2.done{background:#eaf6ef;border:1px solid #c4e6d0;box-shadow:none}
   .schedtime{font-size:22px;font-weight:800;color:var(--blue);flex:none;width:100px}
   .schedlabel{font-size:22px;font-weight:700;flex:1;min-width:0}
   .subline{display:block;font-size:14px;color:var(--mut);font-weight:500;margin-top:2px}
   .schedgo{background:#e8edfb;color:var(--blue);border:none;border-radius:12px;font-size:15px;font-weight:700;padding:10px 14px;flex:none}
-  .donemark{color:var(--green);font-weight:800}
   .checkrow2{display:flex;align-items:center;justify-content:space-between;background:var(--card);border-radius:14px;padding:10px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(21,32,43,.05)}
   .checkrow2.past{opacity:.45}
   .checkname{font-size:15px;font-weight:700;color:var(--ink)}
@@ -223,9 +224,9 @@ nextEl.innerHTML=h;
 var g='';
 for(var k=0;k<tl.length;k++){var x=tl[k];var mm2=minsOf(x.t);var past=(mm2!==null&&mm2<nm);
 if(x.kind==='vitals'||x.kind==='bp'){var st=doneToday(x.ref);
-g+='<div class="checkrow2'+(past?' past':'')+'"><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+(st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:700">&#10003; '+fmtTime(st.ts)+'</div>':'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>')+'</div>';}
+g+='<div class="checkrow2'+(past?' past':'')+(st?' done':'')+'"><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+(st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:800">&#10003; Done &middot; '+fmtTime(st.ts)+'</div>':'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>')+'</div>';}
 else{var dn=(x.kind==='meds')?doneToday(x.ref):null;
-var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span class="schedlabel">'+esc(x.label)+(dn?' <span class="donemark">&#10003;</span>':'')+(x.sub?'<span class="subline">'+esc(x.sub)+'</span>':'')+'</span>';
+var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span class="schedlabel">'+esc(x.label)+(x.sub?'<span class="subline">'+esc(x.sub)+'</span>':'')+'</span>'+(dn?'<span class="donechip">&#10003; Done</span>':'');
 if(x.kind==='meds')g+='<button class="schedrow'+(past?' past':'')+(dn?' done':'')+'" data-check="'+x.ref+'">'+inner+'</button>';
 else g+='<div class="schedrow'+(past?' past':'')+'">'+inner+'</div>';}}
 listEl.innerHTML=g;
