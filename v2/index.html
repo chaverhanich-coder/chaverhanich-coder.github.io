@@ -218,8 +218,8 @@ function fieldRow(label,name){return '<div class="frow"><label>'+label+'</label>
 function fileToDataURL(file){return new Promise(function(res,rej){var img=new Image();var url=URL.createObjectURL(file);img.onload=function(){try{var max=900;var w=img.width,h=img.height;var sc=Math.min(1,max/Math.max(w,h));var c=document.createElement('canvas');c.width=Math.round(w*sc);c.height=Math.round(h*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',0.6));}catch(e){rej(e);}};img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('img'));};img.src=url;});}
 
 function nextSameTime(tl,idx){var kind=tl[idx].kind;for(var j=idx+1;j<tl.length;j++){var mm=minsOf(tl[j].t);if(mm!==null&&tl[j].kind===kind)return mm;}return null;}
-function doneToday(ref){for(var i=0;i<logs.length;i++){var l=logs[i];if(String(l.ref)===String(ref)&&l.ts>=todayStart())return l;}return null;}
-function doneOn(ref,ds,de){for(var i=0;i<logs.length;i++){var l=logs[i];if(String(l.ref)===String(ref)&&l.ts>=ds&&l.ts<de)return l;}return null;}
+function doneToday(ref){return doneOn(ref,todayStart(),todayStart()+86400000);}
+function doneOn(ref,ds,de){for(var i=0;i<logs.length;i++){var l=logs[i];if(String(l.ref)!==String(ref))continue;if(l.day!==undefined&&l.day!==null){if(l.day>=ds&&l.day<de)return l;}else if(l.ts>=ds&&l.ts<de)return l;}return null;}
 function expandTimes(it){var ts=[];if(it.iv>0){var s=minsOf(it.t),e=minsOf(it.et),c=0;for(var m=s;m<=e&&c<96;m+=it.iv,c++){ts.push(('0'+Math.floor(m/60)).slice(-2)+':'+('0'+(m%60)).slice(-2));}}else ts.push(it.t);return ts;}
 function timeline(){var out=[];var today=dstr(new Date());var i;
 for(i=0;i<S.routine.length;i++){var it=S.routine[i];if(it.days&&it.days.length&&it.days.indexOf(new Date().getDay())<0)continue;var subs=(it.meds&&it.meds.length)?it.meds.join(', '):'';var occ=expandTimes(it);for(var o=0;o<occ.length;o++){out.push({t:occ[o],kind:it.kind,label:it.label,sub:subs,ref:(it.iv>0?it.id+':'+occ[o]:String(it.id))});}}
@@ -233,12 +233,12 @@ for(i=0;i<S.routine.length;i++){var it=S.routine[i];if(it.days&&it.days.length&&
 for(i=0;i<S.appts.length;i++){var a=S.appts[i];if(a.d===ds)out.push({t:a.t,kind:'appt',label:a.label,sub:a.notes||'',ref:String(a.id)});}
 out.sort(function(x,y){return (x.t||'99:99')<(y.t||'99:99')?-1:1;});return out;}
 
-function rowHTML(x,mode,st,due,faded){
+function rowHTML(x,mode,st,due,faded,dayD){
 if(x.kind==='vitals'||x.kind==='bp'){
 var info=st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:800">&#10003; Done &middot; '+fmtTime(st.ts)+'</div>':(mode==='today'?'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>':'');
 return '<div class="checkrow2'+(faded?' past':'')+(st?' done':'')+(due?' due':'')+'"'+(st&&st.photo?' data-view="'+st.ts+'"':'')+'><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+info+'</div>';}
 var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span class="schedlabel">'+esc(x.label)+(x.sub?'<span class="subline">'+esc(x.sub)+'</span>':'')+'</span>'+(st?'<span class="donechip">&#10003; Done &middot; '+fmtTime(st.ts)+'</span>':'');
-if(x.kind==='meds'&&mode==='today')return '<button class="schedrow'+(faded?' past':'')+(st?' done':'')+(due?' due':'')+'" data-check="'+x.ref+'">'+inner+'</button>';
+if(x.kind==='meds'&&mode==='today')return '<button class="schedrow'+(faded?' past':'')+(st?' done':'')+(due?' due':'')+'" data-check="'+x.ref+'" data-day="'+(dayD||0)+'">'+inner+'</button>';
 return '<div class="schedrow'+(faded?' past':'')+(due?' due':'')+'">'+inner+'</div>';}
 
 function renderHome(auto){
@@ -257,31 +257,31 @@ for(var i=0;i<tlT.length;i++){var mm=minsOf(tlT[i].t);if(mm!==null&&mm>=nm){nxt=
 if(!nxt){for(var f=1;f<=futureN&&!nxt;f++){var fdx=new Date(t0.getTime()+f*86400000);var ex=dayEntries(fdx);if(ex.length){nxt=ex[0];nxtDay=f;}}}
 var g='';
 for(var pd=startT;pd<t0.getTime();pd+=86400000){var ents=dayEntries(new Date(pd));if(!ents.length)continue;var pg='<div class="dayhead">'+fmtDay(pd)+'</div>';var any=false;
-for(var j=0;j<ents.length;j++){var x=ents[j];var st=(x.kind==='meds'||x.kind==='vitals'||x.kind==='bp')?doneOn(x.ref,pd,pd+86400000):null;pg+=rowHTML(x,'past',st,false,true);any=true;}
+for(var j=0;j<ents.length;j++){var x=ents[j];var st=(x.kind==='meds'||x.kind==='vitals'||x.kind==='bp')?doneOn(x.ref,pd,pd+86400000):null;pg+=rowHTML(x,'past',st,false,true,pd);any=true;}
 if(any)g+=pg;}
 g+='<div class="dayhead">Today</div>';
 var above='',below='';
 for(var k=0;k<tlT.length;k++){var x2=tlT[k];var mm2=minsOf(x2.t);var st2=(x2.kind==='meds'||x2.kind==='vitals'||x2.kind==='bp')?doneOn(x2.ref,t0.getTime(),tEnd):null;var past=(mm2!==null&&mm2<nm);var due=false;
 if(!st2&&(x2.kind==='meds'||x2.kind==='vitals'||x2.kind==='bp')){var mn=null;for(var j2=k+1;j2<tlT.length;j2++){var m3=minsOf(tlT[j2].t);if(m3!==null&&tlT[j2].kind===x2.kind){mn=m3;break;}}due=(mm2<=nm&&(mn===null||mn>nm));}
-var row=rowHTML(x2,'today',st2,due,past);
+var row=rowHTML(x2,'today',st2,due,past,t0.getTime());
 if(past&&!due)above+=row;else below+=row;}
 g+=above;
 g+='<div class="clockcard" id="homeClockCard"><div class="clockbig" id="homeClock"></div><div class="clockdate" id="homeDate"></div></div>';
 if(nxt){var nh='<div class="nextcard"><div class="nexttime">'+(nxt.t?fmt12(nxt.t):'')+'</div><div class="nextlabel">'+esc(nxt.label)+'</div>'+(nxt.sub?'<div class="nextnotes">'+esc(nxt.sub)+'</div>':'');
 if(nxtDay===1)nh+='<div class="nextnotes">tomorrow</div>';
 if(nxtDay>1)nh+='<div class="nextnotes">'+fmtDay(t0.getTime()+nxtDay*86400000)+'</div>';
-if(nxtDay===0){if(nxt.kind==='meds')nh+='<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-check="'+nxt.ref+'">Check it off</button>';
+if(nxtDay===0){if(nxt.kind==='meds')nh+='<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-check="'+nxt.ref+'" data-day="'+(nxtDay===0?t0.getTime():0)+'">Check it off</button>';
 if(nxt.kind==='vitals'||nxt.kind==='bp')nh+='<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-log="'+nxt.kind+'" data-ref="'+nxt.ref+'">Log it now</button>';}
 nh+='</div>';g+=nh;}
 else{g+=(S.routine.length||S.appts.length)?'<div class="empty">All done for today</div>':'<div class="empty">No routine yet. Set it up in the Schedule tab.</div>';}
 g+=below;
 for(var f2=1;f2<=futureN;f2++){var fd=new Date(t0.getTime()+f2*86400000);var ents2=dayEntries(fd);if(!ents2.length)continue;g+='<div class="dayhead">'+fmtDay(fd.getTime())+'</div>';
 var fds=fd.getTime(),fde=fds+86400000;
-for(var j4=0;j4<ents2.length;j4++){var xf=ents2[j4];var stf=(xf.kind==='meds'||xf.kind==='vitals'||xf.kind==='bp')?doneOn(xf.ref,fds,fde):null;g+=rowHTML(xf,'today',stf,false,false);}}
+for(var j4=0;j4<ents2.length;j4++){var xf=ents2[j4];var stf=(xf.kind==='meds'||xf.kind==='vitals'||xf.kind==='bp')?doneOn(xf.ref,fds,fde):null;g+=rowHTML(xf,'today',stf,false,false,fds);}}
 listEl.innerHTML=g;
 tickClock();
 var cbs=listEl.querySelectorAll('[data-check]');
-for(var q=0;q<cbs.length;q++){(function(c2){c2.addEventListener('click',function(){var ref=c2.getAttribute('data-check');if(doneToday(ref)){toast('Already checked off');}else saveDone(ref);});})(cbs[q]);}
+for(var q=0;q<cbs.length;q++){(function(c2){c2.addEventListener('click',function(){var ref=c2.getAttribute('data-check');var dy=Number(c2.getAttribute('data-day')||0);if(doneOn(ref,dy,dy+86400000)){toast('Already checked off');}else saveDone(ref,dy||undefined);});})(cbs[q]);}
 var lbs=listEl.querySelectorAll('[data-log]');
 for(var z=0;z<lbs.length;z++){(function(b2){b2.addEventListener('click',function(){openLog(b2.getAttribute('data-log'),b2.getAttribute('data-ref'));});})(lbs[z]);}
 var vws=listEl.querySelectorAll('[data-view]');
@@ -293,7 +293,7 @@ function openViewer(ts){var l=null;for(var i=0;i<logs.length;i++){if(logs[i].ts=
 if(!l||!l.photo){toast('No photo for that entry');return;}
 document.getElementById('viewerImg').src=l.photo;document.getElementById('viewer').hidden=false;}
 
-function saveDone(ref){idbPut({ts:Date.now(),kind:'done',ref:ref}).then(loadLogs).then(function(){renderHome();toast('Checked off');}).catch(function(){toast('Could not save, try again');});}
+function saveDone(ref,day){var rec={ts:Date.now(),kind:'done',ref:ref};if(day!==undefined&&day!==null)rec.day=day;idbPut(rec).then(loadLogs).then(function(){renderHome();toast('Checked off');}).catch(function(){toast('Could not save, try again');});}
 
 function openLog(kind,ref){logTask=kind;logRef=ref;logPhoto=null;
 document.getElementById('logTitle').textContent=kind==='vitals'?'Log vitals':'Log blood pressure';
