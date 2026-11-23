@@ -1,0 +1,24 @@
+--- a/v2/index.html
++++ b/v2/index.html
+@@ -250,11 +250,11 @@
+ var earliest=null;for(var li=0;li<logs.length;li++){if(earliest===null||logs[li].ts<earliest)earliest=logs[li].ts;}
+ var startT=t0.getTime()-14*86400000;
+ if(earliest!==null){var ed=new Date(earliest);ed=new Date(ed.getFullYear(),ed.getMonth(),ed.getDate());if(ed.getTime()<startT)startT=ed.getTime();}
+-var futureN=7;
++var futureN=7;var futureApptN=60;
+ var tlT=dayEntries(t0);
+ var nxt=null,nxtDay=0;
+ for(var i=0;i<tlT.length;i++){var mm=minsOf(tlT[i].t);if(mm!==null&&mm>=nm){nxt=tlT[i];nxtDay=0;break;}}
+-if(!nxt){for(var f=1;f<=futureN&&!nxt;f++){var fdx=new Date(t0.getTime()+f*86400000);var ex=dayEntries(fdx);if(ex.length){nxt=ex[0];nxtDay=f;}}}
++if(!nxt){for(var f=1;f<=futureApptN&&!nxt;f++){var fdx=new Date(t0.getTime()+f*86400000);var ex=dayEntries(fdx);if(f>futureN){var exa=[];for(var q3=0;q3<ex.length;q3++)if(ex[q3].kind==='appt')exa.push(ex[q3]);ex=exa;}if(ex.length){nxt=ex[0];nxtDay=f;}}}
+ var g='';
+ for(var pd=startT;pd<t0.getTime();pd+=86400000){var ents=dayEntries(new Date(pd));if(!ents.length)continue;var pg='<div class="dayhead">'+fmtDay(pd)+'</div>';var any=false;
+ for(var j=0;j<ents.length;j++){var x=ents[j];var st=(x.kind==='meds'||x.kind==='vitals'||x.kind==='bp')?doneOn(x.ref,pd,pd+86400000):null;pg+=rowHTML(x,'past',st,false,true,pd);any=true;}
+@@ -278,6 +278,7 @@
+ for(var f2=1;f2<=futureN;f2++){var fd=new Date(t0.getTime()+f2*86400000);var ents2=dayEntries(fd);if(!ents2.length)continue;g+='<div class="dayhead">'+fmtDay(fd.getTime())+'</div>';
+ var fds=fd.getTime(),fde=fds+86400000;
+ for(var j4=0;j4<ents2.length;j4++){var xf=ents2[j4];var stf=(xf.kind==='meds'||xf.kind==='vitals'||xf.kind==='bp')?doneOn(xf.ref,fds,fde):null;g+=rowHTML(xf,'today',stf,false,false,fds);}}
++for(var f3=futureN+1;f3<=futureApptN;f3++){var fd3=new Date(t0.getTime()+f3*86400000);var ents3=dayEntries(fd3);var ea=[];for(var q4=0;q4<ents3.length;q4++)if(ents3[q4].kind==='appt')ea.push(ents3[q4]);if(!ea.length)continue;g+='<div class="dayhead">'+fmtDay(fd3.getTime())+'</div>';for(var j5=0;j5<ea.length;j5++)g+=rowHTML(ea[j5],'today',null,false,false,fd3.getTime());}
+ listEl.innerHTML=g;
+ tickClock();
+ var cbs=listEl.querySelectorAll('[data-check]');
