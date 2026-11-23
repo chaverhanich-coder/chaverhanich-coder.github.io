@@ -222,7 +222,7 @@ out.sort(function(x,y){return (x.t||'99:99')<(y.t||'99:99')?-1:1;});return out;}
 
 function tickClock(){var n=new Date();var el=document.getElementById('homeClock');if(el)el.textContent=fmt12(('0'+n.getHours()).slice(-2)+':'+('0'+n.getMinutes()).slice(-2));var d=document.getElementById('homeDate');if(d)d.textContent=n.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});}
 
-function renderHome(){
+function renderHome(auto){
 tickClock();
 var nextEl=document.getElementById('homeNext');var listEl=document.getElementById('homeList');
 var tl=timeline();var nm=nowMins();
@@ -239,14 +239,15 @@ for(var k=0;k<tl.length;k++){var x=tl[k];var mm2=minsOf(x.t);var past=(mm2!==nul
 if(x.kind==='vitals'||x.kind==='bp'){var st=doneToday(x.ref);
 var nx2=nextSameTime(tl,k);
 var due2=(mm2!==null&&mm2<=nm&&!st&&(nx2===null||nx2>nm));
-g+='<div class="checkrow2'+(past?' past':'')+(st?' done':'')+(due2?' due':'')+'"'+(st?' data-view="'+st.ts+'"':'')+'><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+(st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:800">&#10003; Done &middot; '+fmtTime(st.ts)+'</div>':'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>')+'</div>';}
+g+='<div class="checkrow2'+(past?' past':'')+(st?' done':'')+(due2?' due':'')+'" data-tli="'+k+'"'+(st?' data-view="'+st.ts+'"':'')+'><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+(st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:800">&#10003; Done &middot; '+fmtTime(st.ts)+'</div>':'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>')+'</div>';}
 else{var dn=(x.kind==='meds')?doneToday(x.ref):null;
 var nx1=nextSameTime(tl,k);
 var due=(mm2!==null&&mm2<=nm&&!dn&&(nx1===null||nx1>nm));
 var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span class="schedlabel">'+esc(x.label)+(x.sub?'<span class="subline">'+esc(x.sub)+'</span>':'')+'</span>'+(dn?'<span class="donechip">&#10003; Done &middot; '+fmtTime(dn.ts)+'</span>':'');
-if(x.kind==='meds')g+='<button class="schedrow'+(past?' past':'')+(dn?' done':'')+(due?' due':'')+'" data-check="'+x.ref+'">'+inner+'</button>';
-else g+='<div class="schedrow'+(past?' past':'')+(due?' due':'')+'">'+inner+'</div>';}}
+if(x.kind==='meds')g+='<button class="schedrow'+(past?' past':'')+(dn?' done':'')+(due?' due':'')+'" data-tli="'+k+'" data-check="'+x.ref+'">'+inner+'</button>';
+else g+='<div class="schedrow'+(past?' past':'')+(due&&x.kind!=='other'?' due':'')+'" data-tli="'+k+'">'+inner+'</div>';}}
 listEl.innerHTML=g;
+if(auto&&tl.length){var ai=-1;for(var a=0;a<tl.length;a++){var am=minsOf(tl[a].t);if(am!==null&&am>=nowMins()){ai=a;break;}}if(ai<0)ai=tl.length-1;var ae=listEl.querySelector('[data-tli="'+ai+'"]');if(ae)setTimeout(function(){ae.scrollIntoView({block:'start',behavior:'auto'});},60);}
 var cbs=listEl.parentNode.querySelectorAll('[data-check]');
 for(var q=0;q<cbs.length;q++){(function(c2){c2.addEventListener('click',function(){var ref=c2.getAttribute('data-check');if(doneToday(ref)){toast('Already checked off');}else saveDone(ref);});})(cbs[q]);}
 var lbs=listEl.parentNode.querySelectorAll('[data-log]');
@@ -343,7 +344,7 @@ function exportData(){var blob=new Blob([JSON.stringify({settings:S,logs:logs},n
 function wipeData(){if(confirm('Delete everything on this phone? This cannot be undone.')&&confirm('Really delete everything?')){idbClear().then(function(){S={routine:[],appts:[]};saveS();logs=[];renderHome();renderSchedule();toast('All deleted');});}}
 
 function showTab(name){['Home','Schedule','Settings'].forEach(function(n){document.getElementById('tab'+n).classList.toggle('on',n===name);document.getElementById('view'+n).hidden=(n!==name);});
-if(name==='Home')renderHome();if(name==='Schedule')renderSchedule();}
+if(name==='Home')renderHome(true);if(name==='Schedule')renderSchedule();}
 
 document.getElementById('tabSchedule').addEventListener('click',function(){showTab('Schedule');});
 document.getElementById('tabHome').addEventListener('click',function(){showTab('Home');});
