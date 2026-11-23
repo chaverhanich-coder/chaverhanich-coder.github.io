@@ -115,6 +115,7 @@
   </div>
   <div id="viewSettings" hidden>
     <div class="card">
+      <button class="linkbtn" id="viewLogs">View all logs</button>
       <button class="linkbtn" id="exportData">Back up everything (download file)</button>
       <button class="linkbtn danger" id="wipeData">Delete everything on this phone</button>
       <p style="color:var(--mut);font-size:13px">This app lives only on this phone. Back it up now and then with the download button.</p>
@@ -176,6 +177,14 @@
   </div>
 </div>
 
+<div class="modal" id="logsModal" hidden>
+  <div class="sheet">
+    <h2>All logs</h2>
+    <div id="logsList"></div>
+    <div class="btnrow"><button class="cancelbtn" id="logsClose">Close</button></div>
+  </div>
+</div>
+
 <div class="viewer" id="viewer" hidden><img id="viewerImg" alt=""></div>
 <div class="toast" id="toast"></div>
 
@@ -185,7 +194,7 @@ var KINDS={meds:'Meds',vitals:'Vitals',bp:'Blood pressure',other:'Other'};
 var S=JSON.parse(localStorage.getItem('rd_set')||'null')||{routine:[],appts:[]};
 if(!S.routine)S.routine=[];if(!S.appts)S.appts=[];
 function saveS(){localStorage.setItem('rd_set',JSON.stringify(S));}
-var logs=[];var db=null;
+var logs=[];var db=null;var dataReady=false;
 var logTask=null,logRef=null,logPhoto=null;
 var schedMonth=null,schedSel=null;
 var DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Shabos'];
@@ -386,9 +395,19 @@ document.getElementById('logSave').addEventListener('click',saveLog);
 document.getElementById('viewer').addEventListener('click',function(){document.getElementById('viewer').hidden=true;document.getElementById('viewerImg').removeAttribute('src');});
 document.getElementById('exportData').addEventListener('click',exportData);
 document.getElementById('wipeData').addEventListener('click',wipeData);
+function refLabel(ref){var id=String(ref).split(':')[0];for(var i=0;i<S.routine.length;i++){if(String(S.routine[i].id)===id)return S.routine[i];}return null;}
+function openLogs(){var w=document.getElementById('logsList');var h='';
+if(!logs.length)h+='<div class="empty">No logs yet.</div>';
+for(var i=0;i<logs.length;i++){var l=logs[i];var it=refLabel(l.ref);var kind=(l.kind==='done')?(it?it.kind:'meds'):l.kind;var name=it?it.label:(KINDS[kind]||'Log');var when=fmtDay(l.ts)+' &middot; '+fmtTime(l.ts);
+h+='<div class="sitem"'+((l.kind==='vitals'||l.kind==='bp')&&l.photo?' data-view="'+l.ts+'" style="cursor:pointer"':'')+'><div class="sbody"><div class="slabel">'+esc(name)+'<span class="stag">'+(KINDS[kind]||'')+'</span></div><div class="snotes">'+esc(when)+'</div></div></div>';}
+w.innerHTML=h;var vws=w.querySelectorAll('[data-view]');for(var v=0;v<vws.length;v++){(function(d4){d4.addEventListener('click',function(){openViewer(Number(d4.getAttribute('data-view')));});})(vws[v]);}
+document.getElementById('logsModal').hidden=false;}
+document.getElementById('viewLogs').addEventListener('click',openLogs);
+document.getElementById('logsClose').addEventListener('click',function(){document.getElementById('logsModal').hidden=true;});
+document.addEventListener('visibilitychange',function(){if(document.hidden)return;if(dataReady)renderHome();tickClock();});
 
 tickClock();
-openDB().then(loadLogs).then(function(){showTab('Home');setInterval(function(){renderHome();},30000);setInterval(tickClock,5000);}).catch(function(){document.getElementById('homeList').innerHTML='<div class="empty">Could not open storage on this browser.</div>';});
+openDB().then(loadLogs).then(function(){dataReady=true;showTab('Home');setInterval(function(){renderHome();},30000);setInterval(tickClock,5000);}).catch(function(){document.getElementById('homeList').innerHTML='<div class="empty">Could not open storage on this browser.</div>';});
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});if(navigator.serviceWorker.controller){var refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',function(){if(refreshing)return;refreshing=true;window.location.reload();});}});}</script>
 </body>
