@@ -95,13 +95,14 @@
   .viewer img{max-width:100%;max-height:100%}
   .toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:20px;font-size:15px;z-index:50;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
+  .logthumb{width:64px;height:64px;border-radius:10px;object-fit:cover;flex:none;display:block}
 </style>
 </head>
 <body>
 <header><h1>Rabbi's Day</h1></header>
 <main>
   <div id="viewHome" hidden>
-    <div class="clockcard" id="homeClockCard" hidden><div class="clockbig" id="homeClock"></div><div class="clockdate" id="homeDate"></div></div>
+    <div class="clockcard" id="homeClockCard"><div class="clockbig" id="homeClock"></div><div class="clockdate" id="homeDate"></div></div>
     <div id="homeList"></div>
   </div>
   <div id="viewSchedule" hidden>
@@ -399,13 +400,15 @@ function refLabel(ref){var id=String(ref).split(':')[0];for(var i=0;i<S.routine.
 function openLogs(){var w=document.getElementById('logsList');var h='';
 if(!logs.length)h+='<div class="empty">No logs yet.</div>';
 for(var i=0;i<logs.length;i++){var l=logs[i];var it=refLabel(l.ref);var kind=(l.kind==='done')?(it?it.kind:'meds'):l.kind;var name=it?it.label:(KINDS[kind]||'Log');var when=fmtDay(l.ts)+' · '+fmtTime(l.ts);
-h+='<div class="sitem"'+((l.kind==='vitals'||l.kind==='bp')&&l.photo?' data-view="'+l.ts+'" style="cursor:pointer"':'')+'><div class="sbody"><div class="slabel">'+esc(name)+'<span class="stag">'+(KINDS[kind]||'')+'</span></div><div class="snotes">'+esc(when)+'</div></div></div>';}
+var ph=(l.kind==='vitals'||l.kind==='bp')&&l.photo;h+='<div class="sitem"'+(ph?' data-view="'+l.ts+'" style="cursor:pointer"':'')+'>'+(ph?'<img class="logthumb" src="'+l.photo+'" alt="">':'')+'<div class="sbody"><div class="slabel">'+esc(name)+'<span class="stag">'+(KINDS[kind]||'')+'</span></div><div class="snotes">'+esc(when)+'</div></div></div>';}
 w.innerHTML=h;var vws=w.querySelectorAll('[data-view]');for(var v=0;v<vws.length;v++){(function(d4){d4.addEventListener('click',function(){openViewer(Number(d4.getAttribute('data-view')));});})(vws[v]);}
 document.getElementById('logsModal').hidden=false;}
 document.getElementById('viewLogs').addEventListener('click',openLogs);
 document.getElementById('logsClose').addEventListener('click',function(){document.getElementById('logsModal').hidden=true;});
 document.addEventListener('visibilitychange',function(){if(document.hidden)return;if(dataReady)renderHome();tickClock();});
+window.addEventListener('pageshow',function(){tickClock();if(dataReady)renderHome();});
 
+showTab('Home');
 tickClock();
 openDB().then(loadLogs).then(function(){dataReady=true;showTab('Home');setInterval(function(){renderHome();},30000);setInterval(tickClock,5000);}).catch(function(){document.getElementById('homeList').innerHTML='<div class="empty">Could not open storage on this browser.</div>';});
 </script>
