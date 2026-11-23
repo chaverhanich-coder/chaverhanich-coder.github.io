@@ -48,6 +48,7 @@
   .nexttime{font-size:34px;font-weight:800;color:var(--blue);line-height:1}
   .nextlabel{font-size:26px;font-weight:800;margin-top:6px}
   .nextnotes{font-size:15px;color:var(--mut);margin-top:4px}
+  .schedrow,.checkrow2{scroll-margin-top:66px}
   .schedrow{display:flex;align-items:center;gap:12px;background:var(--card);border:none;border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(21,32,43,.06);width:100%;text-align:left}
   .schedrow.past{opacity:.45}
   .schedrow.done{background:#eaf6ef;border:1px solid #c4e6d0;box-shadow:none}
@@ -247,11 +248,11 @@ var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span cl
 if(x.kind==='meds')g+='<button class="schedrow'+(past?' past':'')+(dn?' done':'')+(due?' due':'')+'" data-tli="'+k+'" data-check="'+x.ref+'">'+inner+'</button>';
 else g+='<div class="schedrow'+(past?' past':'')+(due&&x.kind!=='other'?' due':'')+'" data-tli="'+k+'">'+inner+'</div>';}}
 listEl.innerHTML=g;
-if(auto&&tl.length){var ai=-1;for(var a=0;a<tl.length;a++){var am=minsOf(tl[a].t);if(am!==null&&am>=nowMins()){ai=a;break;}}if(ai<0)ai=tl.length-1;var ae=listEl.querySelector('[data-tli="'+ai+'"]');if(ae)setTimeout(function(){ae.scrollIntoView({block:'start',behavior:'auto'});},60);}
 var cbs=listEl.parentNode.querySelectorAll('[data-check]');
 for(var q=0;q<cbs.length;q++){(function(c2){c2.addEventListener('click',function(){var ref=c2.getAttribute('data-check');if(doneToday(ref)){toast('Already checked off');}else saveDone(ref);});})(cbs[q]);}
 var lbs=listEl.parentNode.querySelectorAll('[data-log]');
 for(var z=0;z<lbs.length;z++){(function(b2){b2.addEventListener('click',function(){openLog(b2.getAttribute('data-log'),b2.getAttribute('data-ref'));});})(lbs[z]);}
+if(auto&&tl.length){var ai=-1;for(var a=0;a<tl.length;a++){var am=minsOf(tl[a].t);if(am!==null&&am>=nowMins()){ai=a;break;}}if(ai<0)ai=tl.length-1;var ae=listEl.querySelector('[data-tli="'+ai+'"]');if(ae)setTimeout(function(){ae.scrollIntoView({block:'start',behavior:'auto'});},60);}
 var vws=listEl.parentNode.querySelectorAll('[data-view]');
 for(var v=0;v<vws.length;v++){(function(d4){d4.addEventListener('click',function(){openViewer(Number(d4.getAttribute('data-view')));});})(vws[v]);}
 }
