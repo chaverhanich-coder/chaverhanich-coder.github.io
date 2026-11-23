@@ -267,7 +267,7 @@ else{g+=(S.routine.length||S.appts.length)?'<div class="empty">All done for toda
 g+=below;
 for(var f2=1;f2<=futureN;f2++){var fd=new Date(t0.getTime()+f2*86400000);var ents2=dayEntries(fd);if(!ents2.length)continue;g+='<div class="dayhead">'+fmtDay(fd.getTime())+'</div>';
 for(var j4=0;j4<ents2.length;j4++)g+=rowHTML(ents2[j4],'future',null,false,false);}
-listEl.innerHTML=g;
+listEl.innerHTML=g;tickClock();
 var cbs=listEl.querySelectorAll('[data-check]');
 for(var q=0;q<cbs.length;q++){(function(c2){c2.addEventListener('click',function(){var ref=c2.getAttribute('data-check');if(doneToday(ref)){toast('Already checked off');}else saveDone(ref);});})(cbs[q]);}
 var lbs=listEl.querySelectorAll('[data-log]');
