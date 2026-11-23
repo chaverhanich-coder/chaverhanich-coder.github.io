@@ -48,7 +48,7 @@
   .nexttime{font-size:34px;font-weight:800;color:var(--blue);line-height:1}
   .nextlabel{font-size:26px;font-weight:800;margin-top:6px}
   .nextnotes{font-size:15px;color:var(--mut);margin-top:4px}
-  .schedrow,.checkrow2{scroll-margin-top:66px}
+  .schedrow,.checkrow2,.clockcard{scroll-margin-top:66px}
   .schedrow{display:flex;align-items:center;gap:12px;background:var(--card);border:none;border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(21,32,43,.06);width:100%;text-align:left}
   .schedrow.past{opacity:.45}
   .schedrow.done{background:#eaf6ef;border:1px solid #c4e6d0;box-shadow:none}
@@ -101,12 +101,6 @@
 <header><h1>Rabbi's Day</h1></header>
 <main>
   <div id="viewHome" hidden>
-    <div class="clockcard">
-      <div class="clockbig" id="homeClock"></div>
-      <div class="clockdate" id="homeDate"></div>
-    </div>
-    <div id="homeNext"></div>
-    <div class="dayhead">Today</div>
     <div id="homeList"></div>
   </div>
   <div id="viewSchedule" hidden>
@@ -215,6 +209,7 @@ function fileToDataURL(file){return new Promise(function(res,rej){var img=new Im
 
 function nextSameTime(tl,idx){var kind=tl[idx].kind;for(var j=idx+1;j<tl.length;j++){var mm=minsOf(tl[j].t);if(mm!==null&&tl[j].kind===kind)return mm;}return null;}
 function doneToday(ref){for(var i=0;i<logs.length;i++){var l=logs[i];if(String(l.ref)===String(ref)&&l.ts>=todayStart())return l;}return null;}
+function doneOn(ref,ds,de){for(var i=0;i<logs.length;i++){var l=logs[i];if(String(l.ref)===String(ref)&&l.ts>=ds&&l.ts<de)return l;}return null;}
 function expandTimes(it){var ts=[];if(it.iv>0){var s=minsOf(it.t),e=minsOf(it.et),c=0;for(var m=s;m<=e&&c<96;m+=it.iv,c++){ts.push(('0'+Math.floor(m/60)).slice(-2)+':'+('0'+(m%60)).slice(-2));}}else ts.push(it.t);return ts;}
 function timeline(){var out=[];var today=dstr(new Date());var i;
 for(i=0;i<S.routine.length;i++){var it=S.routine[i];if(it.days&&it.days.length&&it.days.indexOf(new Date().getDay())<0)continue;var subs=(it.meds&&it.meds.length)?it.meds.join(', '):'';var occ=expandTimes(it);for(var o=0;o<occ.length;o++){out.push({t:occ[o],kind:it.kind,label:it.label,sub:subs,ref:(it.iv>0?it.id+':'+occ[o]:String(it.id))});}}
@@ -223,38 +218,63 @@ out.sort(function(x,y){return (x.t||'99:99')<(y.t||'99:99')?-1:1;});return out;}
 
 function tickClock(){var n=new Date();var el=document.getElementById('homeClock');if(el)el.textContent=fmt12(('0'+n.getHours()).slice(-2)+':'+('0'+n.getMinutes()).slice(-2));var d=document.getElementById('homeDate');if(d)d.textContent=n.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});}
 
+function dayEntries(d){var out=[];var dow=d.getDay();var ds=dstr(d);var i;
+for(i=0;i<S.routine.length;i++){var it=S.routine[i];if(it.days&&it.days.length&&it.days.indexOf(dow)<0)continue;var subs=(it.meds&&it.meds.length)?it.meds.join(', '):'';var occ=expandTimes(it);for(var o=0;o<occ.length;o++){out.push({t:occ[o],kind:it.kind,label:it.label,sub:subs,ref:(it.iv>0?it.id+':'+occ[o]:String(it.id))});}}
+for(i=0;i<S.appts.length;i++){var a=S.appts[i];if(a.d===ds)out.push({t:a.t,kind:'appt',label:a.label,sub:a.notes||'',ref:String(a.id)});}
+out.sort(function(x,y){return (x.t||'99:99')<(y.t||'99:99')?-1:1;});return out;}
+
+function rowHTML(x,mode,st,due,faded){
+if(x.kind==='vitals'||x.kind==='bp'){
+var info=st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:800">&#10003; Done &middot; '+fmtTime(st.ts)+'</div>':(mode==='today'?'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>':'');
+return '<div class="checkrow2'+(faded?' past':'')+(st?' done':'')+(due?' due':'')+'"'+(st&&st.photo?' data-view="'+st.ts+'"':'')+'><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+info+'</div>';}
+var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span class="schedlabel">'+esc(x.label)+(x.sub?'<span class="subline">'+esc(x.sub)+'</span>':'')+'</span>'+(st?'<span class="donechip">&#10003; Done &middot; '+fmtTime(st.ts)+'</span>':'');
+if(x.kind==='meds'&&mode==='today')return '<button class="schedrow'+(faded?' past':'')+(st?' done':'')+(due?' due':'')+'" data-check="'+x.ref+'">'+inner+'</button>';
+return '<div class="schedrow'+(faded?' past':'')+(due?' due':'')+'">'+inner+'</div>';}
+
 function renderHome(auto){
 tickClock();
-var nextEl=document.getElementById('homeNext');var listEl=document.getElementById('homeList');
-var tl=timeline();var nm=nowMins();
-var nxt=null;for(var i=0;i<tl.length;i++){var mm=minsOf(tl[i].t);if(mm!==null&&mm>=nm){nxt=tl[i];break;}}
-var h='';
-if(nxt){h+='<div class="nextcard"><div class="nexttime">'+(nxt.t?fmt12(nxt.t):'')+'</div><div class="nextlabel">'+esc(nxt.label)+'</div>'+(nxt.sub?'<div class="nextnotes">'+esc(nxt.sub)+'</div>':'');
-if(nxt.kind==='meds')h+='<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-check="'+nxt.ref+'">Check it off</button>';
-if(nxt.kind==='vitals'||nxt.kind==='bp')h+='<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-log="'+nxt.kind+'" data-ref="'+nxt.ref+'">Log it now</button>';
-h+='</div>';}
-else{h+=tl.length?'<div class="empty">All done for today</div>':'<div class="empty">No routine yet. Set it up in the Schedule tab.</div>';}
-nextEl.innerHTML=h;
+var listEl=document.getElementById('homeList');
+var nm=nowMins();
+var t0=new Date();t0=new Date(t0.getFullYear(),t0.getMonth(),t0.getDate());
+var tEnd=t0.getTime()+86400000;
+var earliest=null;for(var li=0;li<logs.length;li++){if(earliest===null||logs[li].ts<earliest)earliest=logs[li].ts;}
+var startT=t0.getTime()-14*86400000;
+if(earliest!==null){var ed=new Date(earliest);ed=new Date(ed.getFullYear(),ed.getMonth(),ed.getDate());if(ed.getTime()<startT)startT=ed.getTime();}
+var futureN=7;
+var tlT=dayEntries(t0);
+var nxt=null,nxtDay=0;
+for(var i=0;i<tlT.length;i++){var mm=minsOf(tlT[i].t);if(mm!==null&&mm>=nm){nxt=tlT[i];nxtDay=0;break;}}
+if(!nxt){for(var f=1;f<=futureN&&!nxt;f++){var fdx=new Date(t0.getTime()+f*86400000);var ex=dayEntries(fdx);if(ex.length){nxt=ex[0];nxtDay=f;}}}
 var g='';
-for(var k=0;k<tl.length;k++){var x=tl[k];var mm2=minsOf(x.t);var past=(mm2!==null&&mm2<nm);
-if(x.kind==='vitals'||x.kind==='bp'){var st=doneToday(x.ref);
-var nx2=nextSameTime(tl,k);
-var due2=(mm2!==null&&mm2<=nm&&!st&&(nx2===null||nx2>nm));
-g+='<div class="checkrow2'+(past?' past':'')+(st?' done':'')+(due2?' due':'')+'" data-tli="'+k+'"'+(st?' data-view="'+st.ts+'"':'')+'><div><div class="checkname">'+(x.t?fmt12(x.t)+' &middot; ':'')+esc(x.label)+'</div></div>'+(st?'<div class="checkinfo" style="color:#1e7f4f;font-weight:800">&#10003; Done &middot; '+fmtTime(st.ts)+'</div>':'<button class="checklog" data-log="'+x.kind+'" data-ref="'+x.ref+'">Log</button>')+'</div>';}
-else{var dn=(x.kind==='meds')?doneToday(x.ref):null;
-var nx1=nextSameTime(tl,k);
-var due=(mm2!==null&&mm2<=nm&&!dn&&(nx1===null||nx1>nm));
-var inner='<span class="schedtime">'+(x.t?fmt12(x.t):'&mdash;')+'</span><span class="schedlabel">'+esc(x.label)+(x.sub?'<span class="subline">'+esc(x.sub)+'</span>':'')+'</span>'+(dn?'<span class="donechip">&#10003; Done &middot; '+fmtTime(dn.ts)+'</span>':'');
-if(x.kind==='meds')g+='<button class="schedrow'+(past?' past':'')+(dn?' done':'')+(due?' due':'')+'" data-tli="'+k+'" data-check="'+x.ref+'">'+inner+'</button>';
-else g+='<div class="schedrow'+(past?' past':'')+(due&&x.kind!=='other'?' due':'')+'" data-tli="'+k+'">'+inner+'</div>';}}
+for(var pd=startT;pd<t0.getTime();pd+=86400000){var ents=dayEntries(new Date(pd));if(!ents.length)continue;var pg='<div class="dayhead">'+fmtDay(pd)+'</div>';var any=false;
+for(var j=0;j<ents.length;j++){var x=ents[j];var st=(x.kind==='meds'||x.kind==='vitals'||x.kind==='bp')?doneOn(x.ref,pd,pd+86400000):null;pg+=rowHTML(x,'past',st,false,true);any=true;}
+if(any)g+=pg;}
+g+='<div class="dayhead">Today</div>';
+var above='',below='';
+for(var k=0;k<tlT.length;k++){var x2=tlT[k];var mm2=minsOf(x2.t);var st2=(x2.kind==='meds'||x2.kind==='vitals'||x2.kind==='bp')?doneOn(x2.ref,t0.getTime(),tEnd):null;var past=(mm2!==null&&mm2<nm);var due=false;
+if(!past&&!st2&&(x2.kind==='meds'||x2.kind==='vitals'||x2.kind==='bp')){var mn=null;for(var j2=k+1;j2<tlT.length;j2++){var m3=minsOf(tlT[j2].t);if(m3!==null&&tlT[j2].kind===x2.kind){mn=m3;break;}}due=(mm2<=nm&&(mn===null||mn>nm));}
+var row=rowHTML(x2,'today',st2,due,past);
+if(past&&!due)above+=row;else below+=row;}
+g+=above;
+g+='<div class="clockcard" id="homeClockCard"><div class="clockbig" id="homeClock"></div><div class="clockdate" id="homeDate"></div></div>';
+if(nxt){var nh='<div class="nextcard"><div class="nexttime">'+(nxt.t?fmt12(nxt.t):'')+'</div><div class="nextlabel">'+esc(nxt.label)+'</div>'+(nxt.sub?'<div class="nextnotes">'+esc(nxt.sub)+'</div>':'');
+if(nxtDay===1)nh+='<div class="nextnotes">tomorrow</div>';
+if(nxtDay>1)nh+='<div class="nextnotes">'+fmtDay(t0.getTime()+nxtDay*86400000)+'</div>';
+if(nxtDay===0){if(nxt.kind==='meds')nh+='<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-check="'+nxt.ref+'">Check it off</button>';
+if(nxt.kind==='vitals'||nxt.kind==='bp')nh+='<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-log="'+nxt.kind+'" data-ref="'+nxt.ref+'">Log it now</button>';}
+nh+='</div>';g+=nh;}
+else{g+=(S.routine.length||S.appts.length)?'<div class="empty">All done for today</div>':'<div class="empty">No routine yet. Set it up in the Schedule tab.</div>';}
+g+=below;
+for(var f2=1;f2<=futureN;f2++){var fd=new Date(t0.getTime()+f2*86400000);var ents2=dayEntries(fd);if(!ents2.length)continue;g+='<div class="dayhead">'+fmtDay(fd.getTime())+'</div>';
+for(var j4=0;j4<ents2.length;j4++)g+=rowHTML(ents2[j4],'future',null,false,false);}
 listEl.innerHTML=g;
-var cbs=listEl.parentNode.querySelectorAll('[data-check]');
+var cbs=listEl.querySelectorAll('[data-check]');
 for(var q=0;q<cbs.length;q++){(function(c2){c2.addEventListener('click',function(){var ref=c2.getAttribute('data-check');if(doneToday(ref)){toast('Already checked off');}else saveDone(ref);});})(cbs[q]);}
-var lbs=listEl.parentNode.querySelectorAll('[data-log]');
+var lbs=listEl.querySelectorAll('[data-log]');
 for(var z=0;z<lbs.length;z++){(function(b2){b2.addEventListener('click',function(){openLog(b2.getAttribute('data-log'),b2.getAttribute('data-ref'));});})(lbs[z]);}
-if(auto&&tl.length){var ai=-1;for(var a=0;a<tl.length;a++){var am=minsOf(tl[a].t);if(am!==null&&am>=nowMins()){ai=a;break;}}if(ai<0)ai=tl.length-1;var ae=listEl.querySelector('[data-tli="'+ai+'"]');if(ae)setTimeout(function(){ae.scrollIntoView({block:'start',behavior:'auto'});},60);}
-var vws=listEl.parentNode.querySelectorAll('[data-view]');
+var vws=listEl.querySelectorAll('[data-view]');
 for(var v=0;v<vws.length;v++){(function(d4){d4.addEventListener('click',function(){openViewer(Number(d4.getAttribute('data-view')));});})(vws[v]);}
+if(auto){var ae=document.getElementById('homeClockCard');if(ae)setTimeout(function(){ae.scrollIntoView({block:'start',behavior:'auto'});},60);}
 }
 
 function openViewer(ts){var l=null;for(var i=0;i<logs.length;i++){if(logs[i].ts===ts){l=logs[i];break;}}
