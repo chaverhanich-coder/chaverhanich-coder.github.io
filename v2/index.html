@@ -101,6 +101,7 @@
 <header><h1>Rabbi's Day</h1></header>
 <main>
   <div id="viewHome" hidden>
+    <div class="clockcard" id="homeClockCard" hidden><div class="clockbig" id="homeClock"></div><div class="clockdate" id="homeDate"></div></div>
     <div id="homeList"></div>
   </div>
   <div id="viewSchedule" hidden>
@@ -256,7 +257,7 @@ if(!past&&!st2&&(x2.kind==='meds'||x2.kind==='vitals'||x2.kind==='bp')){var mn=n
 var row=rowHTML(x2,'today',st2,due,past);
 if(past&&!due)above+=row;else below+=row;}
 g+=above;
-g+='<div class="clockcard" id="homeClockCard"><div class="clockbig" id="homeClock"></div><div class="clockdate" id="homeDate"></div></div>';
+g+='<div id="clockSlot"></div>';
 if(nxt){var nh='<div class="nextcard"><div class="nexttime">'+(nxt.t?fmt12(nxt.t):'')+'</div><div class="nextlabel">'+esc(nxt.label)+'</div>'+(nxt.sub?'<div class="nextnotes">'+esc(nxt.sub)+'</div>':'');
 if(nxtDay===1)nh+='<div class="nextnotes">tomorrow</div>';
 if(nxtDay>1)nh+='<div class="nextnotes">'+fmtDay(t0.getTime()+nxtDay*86400000)+'</div>';
@@ -267,7 +268,8 @@ else{g+=(S.routine.length||S.appts.length)?'<div class="empty">All done for toda
 g+=below;
 for(var f2=1;f2<=futureN;f2++){var fd=new Date(t0.getTime()+f2*86400000);var ents2=dayEntries(fd);if(!ents2.length)continue;g+='<div class="dayhead">'+fmtDay(fd.getTime())+'</div>';
 for(var j4=0;j4<ents2.length;j4++)g+=rowHTML(ents2[j4],'future',null,false,false);}
-listEl.innerHTML=g;tickClock();
+listEl.innerHTML=g;
+var slot=document.getElementById('clockSlot');var card=document.getElementById('homeClockCard');if(slot&&card){slot.parentNode.replaceChild(card,slot);card.hidden=false;}tickClock();
 var cbs=listEl.querySelectorAll('[data-check]');
 for(var q=0;q<cbs.length;q++){(function(c2){c2.addEventListener('click',function(){var ref=c2.getAttribute('data-check');if(doneToday(ref)){toast('Already checked off');}else saveDone(ref);});})(cbs[q]);}
 var lbs=listEl.querySelectorAll('[data-log]');
@@ -385,7 +387,8 @@ document.getElementById('viewer').addEventListener('click',function(){document.g
 document.getElementById('exportData').addEventListener('click',exportData);
 document.getElementById('wipeData').addEventListener('click',wipeData);
 
-openDB().then(loadLogs).then(function(){showTab('Home');setInterval(function(){renderHome();},30000);setInterval(tickClock,15000);}).catch(function(){document.getElementById('homeList').innerHTML='<div class="empty">Could not open storage on this browser.</div>';});
+tickClock();
+openDB().then(loadLogs).then(function(){showTab('Home');setInterval(function(){renderHome();},30000);setInterval(tickClock,5000);}).catch(function(){document.getElementById('homeList').innerHTML='<div class="empty">Could not open storage on this browser.</div>';});
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});if(navigator.serviceWorker.controller){var refreshing=false;navigator.serviceWorker.addEventListener('controllerchange',function(){if(refreshing)return;refreshing=true;window.location.reload();});}});}</script>
 </body>
