@@ -1,0 +1,31 @@
+--- a/v2/index.html
++++ b/v2/index.html
+@@ -221,2 +221,2 @@
+-function doneToday(ref){for(var i=0;i<logs.length;i++){var l=logs[i];if(String(l.ref)===String(ref)&&l.ts>=todayStart())return l;}return null;}
+-function doneOn(ref,ds,de){for(var i=0;i<logs.length;i++){var l=logs[i];if(String(l.ref)===String(ref)&&l.ts>=ds&&l.ts<de)return l;}return null;}
++function doneToday(ref){return doneOn(ref,todayStart(),todayStart()+86400000);}
++function doneOn(ref,ds,de){for(var i=0;i<logs.length;i++){var l=logs[i];if(String(l.ref)!==String(ref))continue;if(l.day!==undefined&&l.day!==null){if(l.day>=ds&&l.day<de)return l;}else if(l.ts>=ds&&l.ts<de)return l;}return null;}
+@@ -236 +236 @@
+-function rowHTML(x,mode,st,due,faded){
++function rowHTML(x,mode,st,due,faded,dayD){
+@@ -241 +241 @@
+-if(x.kind==='meds'&&mode==='today')return '<button class="schedrow'+(faded?' past':'')+(st?' done':'')+(due?' due':'')+'" data-check="'+x.ref+'">'+inner+'</button>';
++if(x.kind==='meds'&&mode==='today')return '<button class="schedrow'+(faded?' past':'')+(st?' done':'')+(due?' due':'')+'" data-check="'+x.ref+'" data-day="'+(dayD||0)+'">'+inner+'</button>';
+@@ -260 +260 @@
+-for(var j=0;j<ents.length;j++){var x=ents[j];var st=(x.kind==='meds'||x.kind==='vitals'||x.kind==='bp')?doneOn(x.ref,pd,pd+86400000):null;pg+=rowHTML(x,'past',st,false,true);any=true;}
++for(var j=0;j<ents.length;j++){var x=ents[j];var st=(x.kind==='meds'||x.kind==='vitals'||x.kind==='bp')?doneOn(x.ref,pd,pd+86400000):null;pg+=rowHTML(x,'past',st,false,true,pd);any=true;}
+@@ -266 +266 @@
+-var row=rowHTML(x2,'today',st2,due,past);
++var row=rowHTML(x2,'today',st2,due,past,t0.getTime());
+@@ -273 +273 @@
+-if(nxtDay===0){if(nxt.kind==='meds')nh+='<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-check="'+nxt.ref+'">Check it off</button>';
++if(nxtDay===0){if(nxt.kind==='meds')nh+='<button class="schedgo" style="margin-top:12px;display:block;width:100%" data-check="'+nxt.ref+'" data-day="'+(nxtDay===0?t0.getTime():0)+'">Check it off</button>';
+@@ -280 +280 @@
+-for(var j4=0;j4<ents2.length;j4++){var xf=ents2[j4];var stf=(xf.kind==='meds'||xf.kind==='vitals'||xf.kind==='bp')?doneOn(xf.ref,fds,fde):null;g+=rowHTML(xf,'today',stf,false,false);}}
++for(var j4=0;j4<ents2.length;j4++){var xf=ents2[j4];var stf=(xf.kind==='meds'||xf.kind==='vitals'||xf.kind==='bp')?doneOn(xf.ref,fds,fde):null;g+=rowHTML(xf,'today',stf,false,false,fds);}}
+@@ -284 +284 @@
+-for(var q=0;q<cbs.length;q++){(function(c2){c2.addEventListener('click',function(){var ref=c2.getAttribute('data-check');if(doneToday(ref)){toast('Already checked off');}else saveDone(ref);});})(cbs[q]);}
++for(var q=0;q<cbs.length;q++){(function(c2){c2.addEventListener('click',function(){var ref=c2.getAttribute('data-check');var dy=Number(c2.getAttribute('data-day')||0);if(doneOn(ref,dy,dy+86400000)){toast('Already checked off');}else saveDone(ref,dy||undefined);});})(cbs[q]);}
+@@ -296 +296 @@
+-function saveDone(ref){idbPut({ts:Date.now(),kind:'done',ref:ref}).then(loadLogs).then(function(){renderHome();toast('Checked off');}).catch(function(){toast('Could not save, try again');});}
++function saveDone(ref,day){var rec={ts:Date.now(),kind:'done',ref:ref};if(day!==undefined&&day!==null)rec.day=day;idbPut(rec).then(loadLogs).then(function(){renderHome();toast('Checked off');}).catch(function(){toast('Could not save, try again');});}
