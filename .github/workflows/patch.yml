@@ -1,0 +1,22 @@
+name: Apply page patch
+on:
+  push:
+    paths:
+      - '.github/tmp/**'
+      - '.github/workflows/patch.yml'
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply patch
+        run: |
+          git apply .github/tmp/appt.patch
+          rm -rf .github/tmp .github/workflows/patch.yml
+          git config user.name "chaverhanich-coder"
+          git config user.email "chaverhanich-coder@users.noreply.github.com"
+          git add -A
+          git commit -m "Apply timeline appt patch"
+          git push
