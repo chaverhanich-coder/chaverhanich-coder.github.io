@@ -262,7 +262,7 @@ if(any)g+=pg;}
 g+='<div class="dayhead">Today</div>';
 var above='',below='';
 for(var k=0;k<tlT.length;k++){var x2=tlT[k];var mm2=minsOf(x2.t);var st2=(x2.kind==='meds'||x2.kind==='vitals'||x2.kind==='bp')?doneOn(x2.ref,t0.getTime(),tEnd):null;var past=(mm2!==null&&mm2<nm);var due=false;
-if(!past&&!st2&&(x2.kind==='meds'||x2.kind==='vitals'||x2.kind==='bp')){var mn=null;for(var j2=k+1;j2<tlT.length;j2++){var m3=minsOf(tlT[j2].t);if(m3!==null&&tlT[j2].kind===x2.kind){mn=m3;break;}}due=(mm2<=nm&&(mn===null||mn>nm));}
+if(!st2&&(x2.kind==='meds'||x2.kind==='vitals'||x2.kind==='bp')){var mn=null;for(var j2=k+1;j2<tlT.length;j2++){var m3=minsOf(tlT[j2].t);if(m3!==null&&tlT[j2].kind===x2.kind){mn=m3;break;}}due=(mm2<=nm&&(mn===null||mn>nm));}
 var row=rowHTML(x2,'today',st2,due,past);
 if(past&&!due)above+=row;else below+=row;}
 g+=above;
@@ -276,7 +276,8 @@ nh+='</div>';g+=nh;}
 else{g+=(S.routine.length||S.appts.length)?'<div class="empty">All done for today</div>':'<div class="empty">No routine yet. Set it up in the Schedule tab.</div>';}
 g+=below;
 for(var f2=1;f2<=futureN;f2++){var fd=new Date(t0.getTime()+f2*86400000);var ents2=dayEntries(fd);if(!ents2.length)continue;g+='<div class="dayhead">'+fmtDay(fd.getTime())+'</div>';
-for(var j4=0;j4<ents2.length;j4++)g+=rowHTML(ents2[j4],'future',null,false,false);}
+var fds=fd.getTime(),fde=fds+86400000;
+for(var j4=0;j4<ents2.length;j4++){var xf=ents2[j4];var stf=(xf.kind==='meds'||xf.kind==='vitals'||xf.kind==='bp')?doneOn(xf.ref,fds,fde):null;g+=rowHTML(xf,'today',stf,false,false);}}
 listEl.innerHTML=g;
 tickClock();
 var cbs=listEl.querySelectorAll('[data-check]');
